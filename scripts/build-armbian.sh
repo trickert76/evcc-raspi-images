@@ -83,6 +83,9 @@ pushd "$BUILD_DIR" >/dev/null
   EXPERT=yes \
   SKIP_LOG_ARCHIVE=yes \
   SET_OWNER_TO_UID=$(id -u) \
+  SHARE_LOG=yes \
+  USE_TORRENT=no \
+  OFFLINE_WORK=no \
   ./compile.sh \
     BOARD="$BOARD" \
     BRANCH=current \

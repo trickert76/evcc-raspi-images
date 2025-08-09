@@ -40,6 +40,8 @@ jobs:
       - name: Prepare Docker and workspace
         run: |
           mkdir -p dist logs
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static binfmt-support xz-utils zip
 
       - name: Build images (matrix within step)
         env:
