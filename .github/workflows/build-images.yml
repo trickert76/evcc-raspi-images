@@ -10,6 +10,7 @@ on:
       default_password:
         description: "Default password for the admin user"
         required: true
+        default: "changeme"
       hostname:
         description: "Hostname (will be advertised via mDNS as <hostname>.local)"
         required: true
