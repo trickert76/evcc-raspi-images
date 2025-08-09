@@ -31,8 +31,7 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 
 | Name                                                                                      | Armbian Code | Instructions                                                                              |
 | ----------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------- |
-| [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)            | `rpi4b`      | -                                                                                         |
-| [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)                    | `rpi5b`      | -                                                                                         |
+| [Raspberry Pi](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)              | `rpi4b`      |                                                                                           |
 | [Radxa E52C](https://radxa.com/products/network-computer/e52c/)                           | `radxa-e52c` | [flash to eMMC](https://docs.radxa.com/en/e/e52c/getting-started/install-os/maskrom)      |
 | [NanoPi R3S](https://www.friendlyelec.com/index.php?route=product/product&product_id=311) | `nanopi-r3s` | [copy from SD to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation) |
 

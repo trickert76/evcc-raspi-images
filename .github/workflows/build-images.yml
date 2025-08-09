@@ -11,7 +11,6 @@ on:
         options:
           - all
           - rpi4b
-          - rpi5b
           - radxa-e52c
           - nanopi-r3s
       evcc_channel:
@@ -38,9 +37,8 @@ jobs:
         run: |
           choice='${{ inputs.board }}'
           case "$choice" in
-            all)      MATRIX='["rpi4b","rpi5b","radxa-e52c","nanopi-r3s"]' ;;
+            all)      MATRIX='["rpi4b","radxa-e52c","nanopi-r3s"]' ;;
             rpi4b)    MATRIX='["rpi4b"]' ;;
-            rpi5b)    MATRIX='["rpi5b"]' ;;
             radxa-e52c) MATRIX='["radxa-e52c"]' ;;
             nanopi-r3s) MATRIX='["nanopi-r3s"]' ;;
             *) echo "Unknown board: $choice" >&2; exit 1 ;;
