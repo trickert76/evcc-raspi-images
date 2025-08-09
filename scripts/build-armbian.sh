@@ -12,8 +12,6 @@ BOARD=""
 RELEASE="bookworm"
 HOSTNAME="evcc"
 EVCC_CHANNEL="stable" # stable|unstable
-DEFAULT_USERNAME="admin"
-DEFAULT_PASSWORD="admin"
 
 usage() {
   cat <<EOF
@@ -60,8 +58,6 @@ mkdir -p "$BUILDTMP/userpatches/overlay/etc"
 cat >"$BUILDTMP/userpatches/overlay/etc/evcc-image.env" <<ENV
 EVCC_CHANNEL=${EVCC_CHANNEL}
 EVCC_HOSTNAME=${HOSTNAME}
-DEFAULT_USERNAME=${DEFAULT_USERNAME}
-DEFAULT_PASSWORD=${DEFAULT_PASSWORD}
 ENV
 
 # Copy our customize script and auxiliary files

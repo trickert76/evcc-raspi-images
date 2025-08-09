@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        board: ["rpi4b", "radxa-e52c"]
+        board: ["rpi4b", "rpi5b", "radxa-e52c", "nanopi-r3s"]
     name: Build ${{ matrix.board }}
     steps:
       - name: Checkout
