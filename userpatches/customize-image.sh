@@ -27,8 +27,9 @@ EVCC_CHANNEL=${EVCC_CHANNEL:-stable}
 EVCC_HOSTNAME=${EVCC_HOSTNAME:-evcc}
 DEFAULT_USERNAME=${DEFAULT_USERNAME:-admin}
 DEFAULT_PASSWORD=${DEFAULT_PASSWORD:-admin}
+TIMEZONE=${TIMEZONE:-Europe/Berlin}
 
-echo "[customize-image] hostname=$EVCC_HOSTNAME channel=$EVCC_CHANNEL user=$DEFAULT_USERNAME"
+echo "[customize-image] hostname=$EVCC_HOSTNAME channel=$EVCC_CHANNEL user=$DEFAULT_USERNAME tz=$TIMEZONE"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
@@ -38,6 +39,12 @@ apt-get install -y --no-install-recommends \
   curl ca-certificates gnupg apt-transport-https \
   avahi-daemon avahi-utils libnss-mdns \
   caddy cockpit cockpit-pcp
+
+# Set timezone (default Europe/Berlin)
+apt-get install -y --no-install-recommends tzdata
+echo "$TIMEZONE" >/etc/timezone
+ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
+dpkg-reconfigure -f noninteractive tzdata >/dev/null 2>&1 || true
 
 # Install evcc via APT repository per docs
 if [[ "$EVCC_CHANNEL" == "unstable" ]]; then
@@ -99,6 +106,11 @@ systemctl enable evcc || true
 
 # Ensure mDNS service enabled
 systemctl enable avahi-daemon || true
+
+# Clean apt caches to keep image small and silence Armbian warnings about non-empty apt dirs
+apt-get -y autoremove --purge || true
+apt-get clean || true
+rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*.deb /var/cache/apt/* || true
 
 echo "[customize-image] done"
 

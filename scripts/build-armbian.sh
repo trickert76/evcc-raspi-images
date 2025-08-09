@@ -52,7 +52,11 @@ mkdir -p "$REPO_ROOT/dist" "$REPO_ROOT/logs"
 
 # Prepare a temporary userpatches with variables passed to customize-image.sh
 BUILDTMP=$(mktemp -d)
-trap 'rm -rf "$BUILDTMP"' EXIT
+cleanup() {
+  # The Armbian build may create root-owned cache files; don't fail on cleanup.
+  sudo rm -rf "$BUILDTMP" || true
+}
+trap cleanup EXIT
 mkdir -p "$BUILDTMP/userpatches/overlay/etc"
 
 # Exported to the chroot via /etc/armbian-image.env
@@ -82,7 +86,6 @@ echo "Starting build for board=${BOARD} release=${RELEASE} using Armbian build"
 pushd "$BUILD_DIR" >/dev/null
   EXPERT=yes \
   SKIP_LOG_ARCHIVE=yes \
-  SET_OWNER_TO_UID=$(id -u) \
   SHARE_LOG=yes \
   USE_TORRENT=no \
   OFFLINE_WORK=no \

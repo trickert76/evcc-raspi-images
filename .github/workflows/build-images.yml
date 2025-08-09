@@ -57,7 +57,7 @@ jobs:
           chmod +x ./scripts/build-armbian.sh
           for BOARD in "${BOARDS[@]}"; do
             echo "::group::Building for $BOARD"
-            bash ./scripts/build-armbian.sh \
+            sudo -E bash ./scripts/build-armbian.sh \
               --board "$BOARD" \
               --release "$RELEASE" \
               --hostname "$HOSTNAME" \
