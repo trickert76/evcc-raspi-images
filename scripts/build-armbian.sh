@@ -15,11 +15,11 @@ EVCC_CHANNEL="stable" # stable|unstable
 
 usage() {
   cat <<EOF
-Usage: $0 --board <armbian-board> [--release <debian>] [--hostname <name>] \
+Usage: $0 --board <armbian-board> [--release <debian>] \
           [--evcc-channel stable|unstable]
 
 Examples:
-  $0 --board rpi4b --release bookworm --hostname evcc
+  $0 --board rpi4b --release bookworm
   $0 --board radxa-e52c
 
 Supported boards are those supported by Armbian mainline (e.g. rpi4b, radxa-e52c if available).
@@ -30,7 +30,6 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --board) BOARD="$2"; shift 2 ;;
     --release) RELEASE="$2"; shift 2 ;;
-    --hostname) HOSTNAME="$2"; shift 2 ;;
     --evcc-channel) EVCC_CHANNEL="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1"; usage; exit 1 ;;

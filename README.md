@@ -1,34 +1,27 @@
-# evcc Armbian Image Builder
+## evcc Armbian Image Builder
 
 This repository builds Armbian-based images that include:
 
 - evcc (via official APT repo)
 - Cockpit (web console on 9090)
-- Caddy (reverse proxy exposing evcc at 443 with internal TLS)
+- Caddy (reverse proxy exposing evcc at 443)
 
-Defaults
+### Defaults
 
 - Hostname: `evcc` (reachable via mDNS as `evcc.local`)
-- evcc listens on 7070 and is reverse-proxied by Caddy on 443/80
+- evcc listens on port 80 (proxied by Caddy at 443)
 - Cockpit is enabled (port 9090)
+- Login: `root` / `1234` (password change forced at first login for Cockpit/SSH)
 
-Build locally
+### Supported Boards
 
-```bash
-./scripts/build-armbian.sh \
-  --board rpi4b \
-  --release bookworm \
-  --hostname evcc \
-  --evcc-channel stable \
-  --default-username admin \
-  --default-password 'changeme'
-```
+| Board          | Code         |
+| -------------- | ------------ |
+| Raspberry Pi 4 | `rpi4b`      |
+| Raspberry Pi 5 | `rpi5b`      |
+| Radxa E52C     | `radxa-e52c` |
+| NanoPi R3S     | `nanopi-r3s` |
 
-GitHub Actions
-
-- Manual trigger with inputs for username/password/hostname/channel.
-- Produces images for Raspberry Pi 4 (`rpi4b`) and Radxa E52C (`radxa-e52c`) by default.
-
-References
+### References
 
 - evcc installation docs: https://docs.evcc.io/en/docs/installation/linux

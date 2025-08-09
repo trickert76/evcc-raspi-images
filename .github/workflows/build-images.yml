@@ -3,10 +3,6 @@ name: Build images
 on:
   workflow_dispatch:
     inputs:
-      hostname:
-        description: "Hostname (will be advertised via mDNS as <hostname>.local)"
-        required: true
-        default: "evcc"
       evcc_channel:
         description: "evcc APT channel (stable or unstable)"
         required: true
@@ -41,7 +37,6 @@ jobs:
 
       - name: Build image
         env:
-          HOSTNAME: ${{ inputs.hostname }}
           EVCC_CHANNEL: ${{ inputs.evcc_channel }}
           RELEASE: ${{ inputs.release }}
         run: |
@@ -51,7 +46,6 @@ jobs:
           bash ./scripts/build-armbian.sh \
             --board "${{ matrix.board }}" \
             --release "$RELEASE" \
-            --hostname "$HOSTNAME" \
             --evcc-channel "$EVCC_CHANNEL"
           echo "::endgroup::"
 
