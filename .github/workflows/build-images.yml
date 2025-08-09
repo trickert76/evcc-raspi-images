@@ -3,6 +3,17 @@ name: Build images
 on:
   workflow_dispatch:
     inputs:
+      board:
+        description: "Target board to build (or all)"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - rpi4b
+          - rpi5b
+          - radxa-e52c
+          - nanopi-r3s
       evcc_channel:
         description: "evcc APT channel (stable or unstable)"
         required: true
@@ -13,17 +24,33 @@ on:
         default: "bookworm"
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Compute matrix
+        id: set-matrix
+        run: |
+          choice='${{ inputs.board }}'
+          case "$choice" in
+            all)      MATRIX='["rpi4b","rpi5b","radxa-e52c","nanopi-r3s"]' ;;
+            rpi4b)    MATRIX='["rpi4b"]' ;;
+            rpi5b)    MATRIX='["rpi5b"]' ;;
+            radxa-e52c) MATRIX='["radxa-e52c"]' ;;
+            nanopi-r3s) MATRIX='["nanopi-r3s"]' ;;
+            *) echo "Unknown board: $choice" >&2; exit 1 ;;
+          esac
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
   build:
+    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
-        board:
-          - "rpi4b"
-          #- "rpi5b"
-          #- "radxa-e52c"
-          # - "nanopi-r3s"
+        board: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     name: Build ${{ matrix.board }}
     steps:
       - name: Checkout
