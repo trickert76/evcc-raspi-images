@@ -3,14 +3,6 @@ name: Build images
 on:
   workflow_dispatch:
     inputs:
-      default_username:
-        description: "Default admin username (non-evcc service user)"
-        required: true
-        default: "admin"
-      default_password:
-        description: "Default password for the admin user"
-        required: true
-        default: "changeme"
       hostname:
         description: "Hostname (will be advertised via mDNS as <hostname>.local)"
         required: true
@@ -45,8 +37,6 @@ jobs:
 
       - name: Build image
         env:
-          DEFAULT_USERNAME: ${{ inputs.default_username }}
-          DEFAULT_PASSWORD: ${{ inputs.default_password }}
           HOSTNAME: ${{ inputs.hostname }}
           EVCC_CHANNEL: ${{ inputs.evcc_channel }}
           RELEASE: ${{ inputs.release }}
@@ -58,9 +48,7 @@ jobs:
             --board "${{ matrix.board }}" \
             --release "$RELEASE" \
             --hostname "$HOSTNAME" \
-            --evcc-channel "$EVCC_CHANNEL" \
-            --default-username "$DEFAULT_USERNAME" \
-            --default-password "$DEFAULT_PASSWORD"
+            --evcc-channel "$EVCC_CHANNEL"
           echo "::endgroup::"
 
       - name: Upload artifact

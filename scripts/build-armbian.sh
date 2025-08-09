@@ -18,11 +18,10 @@ DEFAULT_PASSWORD="admin"
 usage() {
   cat <<EOF
 Usage: $0 --board <armbian-board> [--release <debian>] [--hostname <name>] \
-          [--evcc-channel stable|unstable] [--default-username <name>] \
-          [--default-password <pwd>]
+          [--evcc-channel stable|unstable]
 
 Examples:
-  $0 --board rpi4b --release bookworm --hostname evcc --default-username admin --default-password 'changeme'
+  $0 --board rpi4b --release bookworm --hostname evcc
   $0 --board radxa-e52c
 
 Supported boards are those supported by Armbian mainline (e.g. rpi4b, radxa-e52c if available).
@@ -35,8 +34,6 @@ while [[ $# -gt 0 ]]; do
     --release) RELEASE="$2"; shift 2 ;;
     --hostname) HOSTNAME="$2"; shift 2 ;;
     --evcc-channel) EVCC_CHANNEL="$2"; shift 2 ;;
-    --default-username) DEFAULT_USERNAME="$2"; shift 2 ;;
-    --default-password) DEFAULT_PASSWORD="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1"; usage; exit 1 ;;
   esac

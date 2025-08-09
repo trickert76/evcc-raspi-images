@@ -25,11 +25,9 @@ fi
 
 EVCC_CHANNEL=${EVCC_CHANNEL:-stable}
 EVCC_HOSTNAME=${EVCC_HOSTNAME:-evcc}
-DEFAULT_USERNAME=${DEFAULT_USERNAME:-admin}
-DEFAULT_PASSWORD=${DEFAULT_PASSWORD:-admin}
 TIMEZONE=${TIMEZONE:-Europe/Berlin}
 
-echo "[customize-image] hostname=$EVCC_HOSTNAME channel=$EVCC_CHANNEL user=$DEFAULT_USERNAME tz=$TIMEZONE"
+echo "[customize-image] hostname=$EVCC_HOSTNAME channel=$EVCC_CHANNEL tz=$TIMEZONE"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
@@ -38,7 +36,25 @@ apt-get update
 apt-get install -y --no-install-recommends \
   curl ca-certificates gnupg apt-transport-https \
   avahi-daemon avahi-utils libnss-mdns \
-  caddy cockpit cockpit-pcp
+  caddy cockpit cockpit-pcp \
+  packagekit cockpit-packagekit \
+  cockpit-networkmanager network-manager \
+  cockpit-storaged cockpit-file-sharing
+
+# Add official repositories for Tailscale and Cloudflared, then install
+. /etc/os-release
+CODENAME=${VERSION_CODENAME:-bookworm}
+
+# Tailscale repo
+curl -fsSL "https://pkgs.tailscale.com/stable/debian/${CODENAME}.noarmor.gpg" -o /usr/share/keyrings/tailscale-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian ${CODENAME} main" > /etc/apt/sources.list.d/tailscale.list
+
+# Cloudflared repo
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com ${CODENAME} main" > /etc/apt/sources.list.d/cloudflared.list
+
+apt-get update
+apt-get install -y tailscale cloudflared cockpit-tailscale cockpit-cloudflared
 
 # Set timezone (default Europe/Berlin)
 apt-get install -y --no-install-recommends tzdata
@@ -59,12 +75,12 @@ apt-get install -y evcc
 echo "$EVCC_HOSTNAME" > /etc/hostname
 sed -i "s/127.0.1.1\s\+.*/127.0.1.1\t$EVCC_HOSTNAME/" /etc/hosts || true
 
-# Create default user if not exists and set password
-if ! id -u "$DEFAULT_USERNAME" >/dev/null 2>&1; then
-  useradd -m -s /bin/bash "$DEFAULT_USERNAME"
-  usermod -aG sudo "$DEFAULT_USERNAME"
-fi
-echo "${DEFAULT_USERNAME}:${DEFAULT_PASSWORD}" | chpasswd
+# Use root with default password and force change on first Cockpit/SSH login
+echo 'root:1234' | chpasswd
+chage -d 0 root || true
+# Disable Armbian interactive first login wizard
+systemctl disable armbian-firstlogin.service || true
+rm -f /root/.not_logged_in_yet || true
 
 # Cockpit: enable web console on 9090
 systemctl enable cockpit.socket || true
@@ -92,6 +108,9 @@ ${EVCC_HOSTNAME}.local:80 {
 CADDY
 
 systemctl enable caddy || true
+systemctl enable packagekit || true
+systemctl enable tailscaled || true
+systemctl enable cloudflared || true
 
 # Enable evcc and pre-generate minimal config if missing
 if [[ ! -f /etc/evcc.yaml ]]; then
@@ -106,6 +125,14 @@ systemctl enable evcc || true
 
 # Ensure mDNS service enabled
 systemctl enable avahi-daemon || true
+
+# Ensure root home exists for Cockpit terminal (normally present)
+test -d /root || mkdir -p /root
+chown -R root:root /root
+
+# Mask noisy console setup units on headless images
+systemctl mask console-setup.service || true
+systemctl mask keyboard-setup.service || true
 
 # Clean apt caches to keep image small and silence Armbian warnings about non-empty apt dirs
 apt-get -y autoremove --purge || true
