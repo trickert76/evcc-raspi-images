@@ -15,9 +15,13 @@ on:
           - radxa-e52c
           - nanopi-r3s
       evcc_channel:
-        description: "evcc APT channel (stable or unstable)"
+        description: "evcc APT channel (stable or nightly)"
         required: true
         default: "stable"
+        type: choice
+        options:
+          - stable
+          - nightly
       release:
         description: "Debian release for Armbian rootfs"
         required: true

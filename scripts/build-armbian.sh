@@ -11,7 +11,7 @@ REPO_ROOT=$(cd -- "${SCRIPT_DIR}/.." && pwd)
 BOARD=""
 RELEASE="bookworm"
 HOSTNAME="evcc"
-EVCC_CHANNEL="stable" # stable|unstable
+EVCC_CHANNEL="stable" # stable|nightly
 
 usage() {
   cat <<EOF
@@ -78,10 +78,7 @@ cp -a "$BUILDTMP/userpatches" "$BUILD_DIR/userpatches"
 if [[ -f "$REPO_ROOT/EVCC_VERSION" ]]; then
   EVCC_VERSION=$(tr -d '\n\r' < "$REPO_ROOT/EVCC_VERSION")
 fi
-CHANNEL_DIR="$EVCC_CHANNEL"
-if [[ "$CHANNEL_DIR" == "unstable" ]]; then
-  CHANNEL_DIR="nightly"
-fi
+c="$EVCC_CHANNEL"
 
 echo "Starting build for board=${BOARD} release=${RELEASE} using Armbian build"
 pushd "$BUILD_DIR" >/dev/null
