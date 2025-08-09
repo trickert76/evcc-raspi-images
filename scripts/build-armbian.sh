@@ -70,28 +70,31 @@ chmod +x "$BUILDTMP/userpatches/customize-image.sh" || true
 IMAGE_OUT_DIR="$REPO_ROOT/dist/${BOARD}"
 mkdir -p "$IMAGE_OUT_DIR"
 
-DOCKER_IMAGE="ghcr.io/armbian/build"
+# Clone Armbian build framework and run it in Docker mode (it will build its own container image).
+BUILD_DIR="$BUILDTMP/build"
+git clone --depth=1 https://github.com/armbian/build.git "$BUILD_DIR"
 
-echo "Pulling Armbian Build container..."
-docker pull "$DOCKER_IMAGE:latest"
+# Place our userpatches into the build tree
+rm -rf "$BUILD_DIR/userpatches"
+cp -a "$BUILDTMP/userpatches" "$BUILD_DIR/userpatches"
 
-echo "Starting build for board=${BOARD} release=${RELEASE}"
+echo "Starting build for board=${BOARD} release=${RELEASE} using Armbian build (docker mode)"
+pushd "$BUILD_DIR" >/dev/null
+  EXPERT=yes \
+  ./compile.sh docker \
+    BOARD="$BOARD" \
+    BRANCH=current \
+    RELEASE="$RELEASE" \
+    BUILD_MINIMAL=no \
+    BUILD_DESKTOP=no \
+    KERNEL_CONFIGURE=no \
+    COMPRESS_OUTPUTIMAGE=sha,zip
+popd >/dev/null
 
-# Invoke Armbian Build. We use EXPERT=yes to allow non-interactive config.
-docker run --rm -t --privileged \
-  -e EXPERT="yes" \
-  -e BOARD="$BOARD" \
-  -e BRANCH="current" \
-  -e RELEASE="$RELEASE" \
-  -e BUILD_MINIMAL="no" \
-  -e BUILD_DESKTOP="no" \
-  -e KERNEL_CONFIGURE="no" \
-  -e COMPRESS_OUTPUTIMAGE="sha,zip" \
-  -v "$IMAGE_OUT_DIR":/output \
-  -v "$BUILDTMP/userpatches":/userpatches \
-  -v "$REPO_ROOT/logs":/logs \
-  "$DOCKER_IMAGE:latest" \
-  bash -lc "./compile.sh BOARD=\"$BOARD\" BRANCH=current RELEASE=\"$RELEASE\" BUILD_MINIMAL=no BUILD_DESKTOP=no KERNEL_CONFIGURE=no COMPRESS_OUTPUTIMAGE=sha,zip"
+# Copy results
+if compgen -G "$BUILD_DIR/output/images/*" > /dev/null; then
+  cp -a "$BUILD_DIR/output/images/"* "$IMAGE_OUT_DIR/"
+fi
 
 echo "Build done. Output in $IMAGE_OUT_DIR"
 
