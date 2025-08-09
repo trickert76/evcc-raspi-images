@@ -78,7 +78,7 @@ docker pull "$DOCKER_IMAGE:latest"
 echo "Starting build for board=${BOARD} release=${RELEASE}"
 
 # Invoke Armbian Build. We use EXPERT=yes to allow non-interactive config.
-docker run --rm -t \
+docker run --rm -t --privileged \
   -e EXPERT="yes" \
   -e BOARD="$BOARD" \
   -e BRANCH="current" \

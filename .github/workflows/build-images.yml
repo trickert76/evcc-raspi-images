@@ -38,8 +38,6 @@ jobs:
 
       - name: Prepare Docker and workspace
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io jq
           mkdir -p dist logs
 
       - name: Build images (matrix within step)
