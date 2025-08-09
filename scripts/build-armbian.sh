@@ -78,7 +78,6 @@ cp -a "$BUILDTMP/userpatches" "$BUILD_DIR/userpatches"
 if [[ -f "$REPO_ROOT/EVCC_VERSION" ]]; then
   EVCC_VERSION=$(tr -d '\n\r' < "$REPO_ROOT/EVCC_VERSION")
 fi
-c="$EVCC_CHANNEL"
 
 echo "Starting build for board=${BOARD} release=${RELEASE} using Armbian build"
 pushd "$BUILD_DIR" >/dev/null
@@ -98,7 +97,7 @@ pushd "$BUILD_DIR" >/dev/null
 popd >/dev/null
 
 # Copy results to channel-specific output directory
-IMAGE_OUT_DIR="$REPO_ROOT/dist/${CHANNEL_DIR}/${BOARD}"
+IMAGE_OUT_DIR="$REPO_ROOT/dist/${EVCC_CHANNEL}/${BOARD}"
 mkdir -p "$IMAGE_OUT_DIR"
 if compgen -G "$BUILD_DIR/output/images/*" > /dev/null; then
   cp -a "$BUILD_DIR/output/images/"* "$IMAGE_OUT_DIR/"
