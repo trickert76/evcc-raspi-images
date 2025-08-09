@@ -1,4 +1,4 @@
-name: Build Armbian Images (evcc + cockpit + caddy)
+name: Build images
 
 on:
   workflow_dispatch:

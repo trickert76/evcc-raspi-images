@@ -78,10 +78,12 @@ git clone --depth=1 https://github.com/armbian/build.git "$BUILD_DIR"
 rm -rf "$BUILD_DIR/userpatches"
 cp -a "$BUILDTMP/userpatches" "$BUILD_DIR/userpatches"
 
-echo "Starting build for board=${BOARD} release=${RELEASE} using Armbian build (docker mode)"
+echo "Starting build for board=${BOARD} release=${RELEASE} using Armbian build"
 pushd "$BUILD_DIR" >/dev/null
   EXPERT=yes \
-  ./compile.sh docker \
+  SKIP_LOG_ARCHIVE=yes \
+  SET_OWNER_TO_UID=$(id -u) \
+  ./compile.sh \
     BOARD="$BOARD" \
     BRANCH=current \
     RELEASE="$RELEASE" \
