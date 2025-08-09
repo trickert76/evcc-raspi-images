@@ -23,16 +23,16 @@ on:
         description: "Debian release for Armbian rootfs"
         required: true
         default: "bookworm"
-      boards:
-        description: |
-          Comma-separated Armbian board codes to build (e.g. rpi4b,radxa-e52c). By default we build Raspberry Pi 4 and Radxa E52C.
-        required: true
-        default: "rpi4b,radxa-e52c"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        board: ["rpi4b", "radxa-e52c"]
+    name: Build ${{ matrix.board }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,33 +43,30 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-user-static binfmt-support xz-utils zip
 
-      - name: Build images (matrix within step)
+      - name: Build image
         env:
           DEFAULT_USERNAME: ${{ inputs.default_username }}
           DEFAULT_PASSWORD: ${{ inputs.default_password }}
           HOSTNAME: ${{ inputs.hostname }}
           EVCC_CHANNEL: ${{ inputs.evcc_channel }}
           RELEASE: ${{ inputs.release }}
-          BOARDS_CSV: ${{ inputs.boards }}
         run: |
           set -euo pipefail
-          IFS=',' read -r -a BOARDS <<< "$BOARDS_CSV"
           chmod +x ./scripts/build-armbian.sh
-          for BOARD in "${BOARDS[@]}"; do
-            echo "::group::Building for $BOARD"
-            sudo -E bash ./scripts/build-armbian.sh \
-              --board "$BOARD" \
-              --release "$RELEASE" \
-              --hostname "$HOSTNAME" \
-              --evcc-channel "$EVCC_CHANNEL" \
-              --default-username "$DEFAULT_USERNAME" \
-              --default-password "$DEFAULT_PASSWORD"
-            echo "::endgroup::"
-          done
+          echo "::group::Building for ${{ matrix.board }}"
+          bash ./scripts/build-armbian.sh \
+            --board "${{ matrix.board }}" \
+            --release "$RELEASE" \
+            --hostname "$HOSTNAME" \
+            --evcc-channel "$EVCC_CHANNEL" \
+            --default-username "$DEFAULT_USERNAME" \
+            --default-password "$DEFAULT_PASSWORD"
+          echo "::endgroup::"
 
-      - name: Upload artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: armbian-images
-          path: dist/**
+          name: armbian-image-${{ matrix.board }}
+          path: |
+            dist/**/${{ matrix.board }}/**
           if-no-files-found: error

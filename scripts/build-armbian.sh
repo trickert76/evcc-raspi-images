@@ -82,6 +82,15 @@ git clone --depth=1 https://github.com/armbian/build.git "$BUILD_DIR"
 rm -rf "$BUILD_DIR/userpatches"
 cp -a "$BUILDTMP/userpatches" "$BUILD_DIR/userpatches"
 
+# Read evcc version from repository file and compute output channel dir name
+if [[ -f "$REPO_ROOT/EVCC_VERSION" ]]; then
+  EVCC_VERSION=$(tr -d '\n\r' < "$REPO_ROOT/EVCC_VERSION")
+fi
+CHANNEL_DIR="$EVCC_CHANNEL"
+if [[ "$CHANNEL_DIR" == "unstable" ]]; then
+  CHANNEL_DIR="nightly"
+fi
+
 echo "Starting build for board=${BOARD} release=${RELEASE} using Armbian build"
 pushd "$BUILD_DIR" >/dev/null
   EXPERT=yes \
@@ -99,10 +108,28 @@ pushd "$BUILD_DIR" >/dev/null
     COMPRESS_OUTPUTIMAGE=sha,zip
 popd >/dev/null
 
-# Copy results
+# Copy results to channel-specific output directory
+IMAGE_OUT_DIR="$REPO_ROOT/dist/${CHANNEL_DIR}/${BOARD}"
+mkdir -p "$IMAGE_OUT_DIR"
 if compgen -G "$BUILD_DIR/output/images/*" > /dev/null; then
   cp -a "$BUILD_DIR/output/images/"* "$IMAGE_OUT_DIR/"
 fi
+
+# Rename outputs to armbian_evcc-[evcc-version]_[board].img[...]
+shopt -s nullglob
+for f in "$IMAGE_OUT_DIR"/Armbian-*; do
+  base_ext="${f##*.}"
+  if [[ "$f" == *.img ]]; then
+    mv -f "$f" "$IMAGE_OUT_DIR/armbian_evcc-${EVCC_VERSION}_${BOARD}.img"
+  elif [[ "$f" == *.img.sha ]]; then
+    mv -f "$f" "$IMAGE_OUT_DIR/armbian_evcc-${EVCC_VERSION}_${BOARD}.img.sha"
+  elif [[ "$f" == *.img.txt ]]; then
+    mv -f "$f" "$IMAGE_OUT_DIR/armbian_evcc-${EVCC_VERSION}_${BOARD}.img.txt"
+  elif [[ "$f" == *.img.zip ]]; then
+    mv -f "$f" "$IMAGE_OUT_DIR/armbian_evcc-${EVCC_VERSION}_${BOARD}.img.zip"
+  fi
+done
+shopt -u nullglob
 
 echo "Build done. Output in $IMAGE_OUT_DIR"
 
