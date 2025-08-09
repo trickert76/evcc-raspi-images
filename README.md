@@ -22,10 +22,10 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 ## Security
 
 - Login into the [Cockpit](https://cockpit-project.org) web console on `https://evcc.local:9090/`
-  - username `root`
-  - password `1234`
+  - username `admin`
+  - password `admin`
 - **Change your password(!!)** to something more secure.
-- Alternatively: connect via SSH `ssh root@evcc.local`
+- Alternatively: connect via SSH `ssh admin@evcc.local`
 
 ## Supported Boards
 
