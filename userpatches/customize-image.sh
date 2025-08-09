@@ -38,23 +38,7 @@ apt-get install -y --no-install-recommends \
   avahi-daemon avahi-utils libnss-mdns \
   caddy cockpit cockpit-pcp \
   packagekit cockpit-packagekit \
-  cockpit-networkmanager network-manager \
-  cockpit-storaged cockpit-file-sharing
-
-# Add official repositories for Tailscale and Cloudflared, then install
-. /etc/os-release
-CODENAME=${VERSION_CODENAME:-bookworm}
-
-# Tailscale repo
-curl -fsSL "https://pkgs.tailscale.com/stable/debian/${CODENAME}.noarmor.gpg" -o /usr/share/keyrings/tailscale-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian ${CODENAME} main" > /etc/apt/sources.list.d/tailscale.list
-
-# Cloudflared repo
-curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg
-echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com ${CODENAME} main" > /etc/apt/sources.list.d/cloudflared.list
-
-apt-get update
-apt-get install -y tailscale cloudflared cockpit-tailscale cockpit-cloudflared
+  cockpit-networkmanager network-manager
 
 # Set timezone (default Europe/Berlin)
 apt-get install -y --no-install-recommends tzdata
@@ -85,7 +69,7 @@ rm -f /root/.not_logged_in_yet || true
 # Cockpit: enable web console on 9090
 systemctl enable cockpit.socket || true
 
-# Caddy configuration with internal TLS and reverse proxy to evcc:7070
+# Caddy configuration with internal TLS and reverse proxy to evcc:80
 mkdir -p /etc/caddy
 cat >/etc/caddy/Caddyfile <<CADDY
 {
@@ -98,13 +82,9 @@ ${EVCC_HOSTNAME}.local:443 {
   tls internal
   encode zstd gzip
   log
-  reverse_proxy 127.0.0.1:7070
+  reverse_proxy 127.0.0.1:80
 }
 
-# Also expose on 80 and redirect to 443
-${EVCC_HOSTNAME}.local:80 {
-  redir https://{host}{uri}
-}
 CADDY
 
 systemctl enable caddy || true
@@ -116,9 +96,9 @@ systemctl enable cloudflared || true
 if [[ ! -f /etc/evcc.yaml ]]; then
   cat >/etc/evcc.yaml <<YAML
 network:
-  schema: http
+  schema: https
   host: evcc.local
-  port: 7070
+  port: 80
 YAML
 fi
 systemctl enable evcc || true
