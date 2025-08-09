@@ -38,7 +38,8 @@ apt-get install -y --no-install-recommends \
   avahi-daemon avahi-utils libnss-mdns \
   caddy cockpit cockpit-pcp \
   packagekit cockpit-packagekit \
-  cockpit-networkmanager network-manager
+  cockpit-networkmanager network-manager \
+  sudo
 
 # Set timezone (default Europe/Berlin)
 apt-get install -y --no-install-recommends tzdata
@@ -59,12 +60,24 @@ apt-get install -y evcc
 echo "$EVCC_HOSTNAME" > /etc/hostname
 sed -i "s/127.0.1.1\s\+.*/127.0.1.1\t$EVCC_HOSTNAME/" /etc/hosts || true
 
-# Use root with default password and force change on first Cockpit/SSH login
-echo 'root:1234' | chpasswd
-chage -d 0 root || true
+# SSH hardening (Armbian/Debian Bookworm): use drop-in to override defaults
+mkdir -p /etc/ssh/sshd_config.d
+cat >/etc/ssh/sshd_config.d/99-evcc.conf <<'SSHD'
+# Disable SSH login for root
+PermitRootLogin no
+SSHD
+
 # Disable Armbian interactive first login wizard
 systemctl disable armbian-firstlogin.service || true
 rm -f /root/.not_logged_in_yet || true
+
+# Create admin user with initial password and require password change on first login
+if ! id -u admin >/dev/null 2>&1; then
+  useradd -m -s /bin/bash admin
+fi
+echo 'admin:admin' | chpasswd
+chage -d 0 admin || true
+usermod -aG sudo admin || true
 
 # Cockpit: enable web console on 9090
 systemctl enable cockpit.socket || true
@@ -89,8 +102,6 @@ CADDY
 
 systemctl enable caddy || true
 systemctl enable packagekit || true
-systemctl enable tailscaled || true
-systemctl enable cloudflared || true
 
 # Enable evcc and pre-generate minimal config if missing
 if [[ ! -f /etc/evcc.yaml ]]; then
