@@ -64,6 +64,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-user-static binfmt-support xz-utils zip
 
+      - name: Read evcc version
+        id: evcc-version
+        run: |
+          EVCC_VERSION=$(tr -d '\n\r' < EVCC_VERSION)
+          echo "version=$EVCC_VERSION" >> $GITHUB_OUTPUT
+          echo "EVCC_VERSION=$EVCC_VERSION" >> $GITHUB_ENV
+
       - name: Build image
         env:
           EVCC_CHANNEL: ${{ inputs.evcc_channel }}
@@ -78,10 +85,23 @@ jobs:
             --evcc-channel "$EVCC_CHANNEL"
           echo "::endgroup::"
 
-      - name: Upload artifact
+      - name: Upload .img artifact
         uses: actions/upload-artifact@v4
         with:
-          name: armbian-image-${{ matrix.board }}
-          path: |
-            dist/**/${{ matrix.board }}/**
+          name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img
+          path: dist/**/${{ matrix.board }}/*.img
+          if-no-files-found: error
+
+      - name: Upload .img.sha artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img.sha
+          path: dist/**/${{ matrix.board }}/*.img.sha
+          if-no-files-found: error
+
+      - name: Upload .img.txt artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img.txt
+          path: dist/**/${{ matrix.board }}/*.img.txt
           if-no-files-found: error
