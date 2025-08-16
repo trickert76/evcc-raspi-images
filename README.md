@@ -19,23 +19,24 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 - Navigate to `https://evcc.local/` in your browser. Accept the self-signed certificate.
 - You should see the evcc web interface.
 
-## Security
+## Administration
 
 - Login into the [Cockpit](https://cockpit-project.org) web console on `https://evcc.local:9090/`
   - username `admin`
   - password `admin`
 - You'll be prompted to change your password. **Remember the new password.** There is no reset.
+- You can see system health, update packages and run terminal commands.
 - Alternatively: connect via SSH `ssh admin@evcc.local`
 
 ## Supported Boards
 
-| Name                                                                                      | Tested | Image Name                                                 | Instructions                                                                                      |
-| ----------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)                    | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
-| [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)            | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
-| [Raspberry Pi 3b](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)           | ⚠️     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
-| [NanoPi R3S](https://www.friendlyelec.com/index.php?route=product/product&product_id=311) | ✅     | [`nanopi-r3s`](https://github.com/evcc-io/images/releases) | see above, [then copy to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation) |
-| [Radxa E52C](https://radxa.com/products/network-computer/e52c/)                           | ✅     | [`radxa-e52c`](https://github.com/evcc-io/images/releases) | [flash directly to eMMC](https://docs.radxa.com/en/e/e52c/getting-started/install-os/maskrom)     |
+| Name                                                                                      | Tested | Image Name                                                 | Instructions                                                                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)                    | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                                                                                                                                        |
+| [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)            | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                                                                                                                                        |
+| [Raspberry Pi 3b](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)           | ⚠️     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                                                                                                                                        |
+| [NanoPi R3S](https://www.friendlyelec.com/index.php?route=product/product&product_id=311) | ✅     | [`nanopi-r3s`](https://github.com/evcc-io/images/releases) | see above, [then copy to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation)                                                                                                                |
+| [Radxa E52C](https://radxa.com/products/network-computer/e52c/)                           | ✅     | [`radxa-e52c`](https://github.com/evcc-io/images/releases) | see above, [then copy to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation)<br/>alternative: [flash directly to eMMC](https://docs.radxa.com/en/e/e52c/getting-started/install-os/maskrom) |
 
 ✅ tested<br/>
 ⚠️ untested (but should work)
