@@ -9,17 +9,15 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 REPO_ROOT=$(cd -- "${SCRIPT_DIR}/.." && pwd)
 
 BOARD=""
-RELEASE="bookworm"
 HOSTNAME="evcc"
 EVCC_CHANNEL="stable" # stable|nightly
 
 usage() {
   cat <<EOF
-Usage: $0 --board <armbian-board> [--release <debian>] \
-          [--evcc-channel stable|unstable]
+Usage: $0 --board <armbian-board> [--evcc-channel stable|unstable]
 
 Examples:
-  $0 --board rpi4b --release bookworm
+  $0 --board rpi4b
   $0 --board radxa-e52c
 
 Supported boards are those supported by Armbian mainline (e.g. rpi4b, radxa-e52c if available).
@@ -29,7 +27,6 @@ EOF
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --board) BOARD="$2"; shift 2 ;;
-    --release) RELEASE="$2"; shift 2 ;;
     --evcc-channel) EVCC_CHANNEL="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1"; usage; exit 1 ;;
@@ -79,7 +76,7 @@ if [[ -f "$REPO_ROOT/EVCC_VERSION" ]]; then
   EVCC_VERSION=$(tr -d '\n\r' < "$REPO_ROOT/EVCC_VERSION")
 fi
 
-echo "Starting build for board=${BOARD} release=${RELEASE} using Armbian build"
+echo "Starting build for board=${BOARD} release=bookworm using Armbian build"
 pushd "$BUILD_DIR" >/dev/null
   EXPERT=yes \
   SKIP_LOG_ARCHIVE=yes \
@@ -89,7 +86,7 @@ pushd "$BUILD_DIR" >/dev/null
   ./compile.sh \
     BOARD="$BOARD" \
     BRANCH=current \
-    RELEASE="$RELEASE" \
+    RELEASE="bookworm" \
     BUILD_MINIMAL=no \
     BUILD_DESKTOP=no \
     KERNEL_CONFIGURE=no \

@@ -21,10 +21,6 @@ on:
         options:
           - stable
           - nightly
-      release:
-        description: "Debian release for Armbian rootfs"
-        required: true
-        default: "bookworm"
   workflow_call:
     inputs:
       board:
@@ -36,11 +32,6 @@ on:
         description: "evcc APT channel (stable or nightly)"
         required: true
         default: "stable"
-        type: string
-      release:
-        description: "Debian release for Armbian rootfs"
-        required: true
-        default: "bookworm"
         type: string
 
 jobs:
@@ -91,14 +82,12 @@ jobs:
       - name: Build image
         env:
           EVCC_CHANNEL: ${{ inputs.evcc_channel }}
-          RELEASE: ${{ inputs.release }}
         run: |
           set -euo pipefail
           chmod +x ./scripts/build-armbian.sh
           echo "::group::Building for ${{ matrix.board }}"
           bash ./scripts/build-armbian.sh \
             --board "${{ matrix.board }}" \
-            --release "$RELEASE" \
             --evcc-channel "$EVCC_CHANNEL"
           echo "::endgroup::"
 

@@ -11,10 +11,6 @@ on:
         options:
           - stable
           - nightly
-      release:
-        description: "Debian release for Armbian rootfs"
-        required: true
-        default: "bookworm"
 
 jobs:
   prepare:
@@ -56,7 +52,6 @@ jobs:
     with:
       board: "all"
       evcc_channel: ${{ inputs.evcc_channel }}
-      release: ${{ inputs.release }}
 
   create-release:
     needs: [prepare, build]
@@ -80,7 +75,7 @@ jobs:
         id: release-notes
         run: |
           # Create minimal release notes
-          echo "evcc ${{ steps.evcc-version.outputs.version }} (${{ inputs.evcc_channel }} channel) on Armbian ${{ inputs.release }}." > release_notes.md
+          echo "evcc ${{ steps.evcc-version.outputs.version }} (${{ inputs.evcc_channel }} channel) on Armbian bookworm." > release_notes.md
 
       - name: Create Release
         run: |
