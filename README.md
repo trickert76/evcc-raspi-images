@@ -2,6 +2,9 @@
 
 [![Built with Depot](https://depot.dev/badges/built-with-depot.svg)](https://depot.dev/?utm_source=evcc)
 
+> **⚠️ Still experimental, feedback welcome!**  
+> These images are currently in experimental phase. Please [report any issues](https://github.com/evcc-io/images/issues) or share your feedback to help us improve.
+
 Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popular single-board computers like Raspberry Pi, Radxa and NanoPi.
 
 ## Image contents
@@ -18,6 +21,7 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 - Insert your SD card and connect your device with power and ethernet.
 - Navigate to `https://evcc.local/` in your browser. Accept the self-signed certificate.
 - You should see the evcc web interface.
+- Alternatively: Use the [evcc iOS/Android app](http://github.com/evcc-io/app) to connect to your evcc instance.
 
 ## Administration
 
@@ -64,3 +68,8 @@ Pick 2GB if you want to be on the safe side.
 ## License
 
 - [MIT](LICENSE)
+
+## Thanks 💚
+
+Huge thanks to the [Armbian](https://www.armbian.com) project for making building these images easy!
+They also accept [donations](https://www.armbian.com/donate/). Wink wink.
