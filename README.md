@@ -24,22 +24,36 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 - Login into the [Cockpit](https://cockpit-project.org) web console on `https://evcc.local:9090/`
   - username `admin`
   - password `admin`
-- **Change your password(!!)** to something more secure.
+- You'll be prompted to change your password. **Remember the new password.** There is no reset.
 - Alternatively: connect via SSH `ssh admin@evcc.local`
 
 ## Supported Boards
 
-| Name                                                                                      | Armbian Code | Instructions                                                                              |
-| ----------------------------------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------- |
-| [Raspberry Pi](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)              | `rpi4b`      |                                                                                           |
-| [Radxa E52C](https://radxa.com/products/network-computer/e52c/)                           | `radxa-e52c` | [flash to eMMC](https://docs.radxa.com/en/e/e52c/getting-started/install-os/maskrom)      |
-| [NanoPi R3S](https://www.friendlyelec.com/index.php?route=product/product&product_id=311) | `nanopi-r3s` | [copy from SD to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation) |
+| Name                                                                                      | Tested | Image Name                                                 | Instructions                                                                                      |
+| ----------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)                    | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
+| [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)            | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
+| [Raspberry Pi 3b](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)           | ⚠️     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
+| [NanoPi R3S](https://www.friendlyelec.com/index.php?route=product/product&product_id=311) | ✅     | [`nanopi-r3s`](https://github.com/evcc-io/images/releases) | see above, [then copy to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation) |
+| [Radxa E52C](https://radxa.com/products/network-computer/e52c/)                           | ✅     | [`radxa-e52c`](https://github.com/evcc-io/images/releases) | [flash directly to eMMC](https://docs.radxa.com/en/e/e52c/getting-started/install-os/maskrom)     |
 
-## Storage recommendations
+✅ tested<br/>
+⚠️ untested (but should work)
 
-Running from built-in eMMC is recommended. Radxa E52C and NanoPi R3S come with built-in storage.
+## Hardware Recommendations
 
+### Storage
+
+16GB storage should be enough when only using evcc.
+We recommend running your system from eMMC instead of SD card.
+**Radxa E52C and NanoPi R3S come with built-in eMMC storage.**
 If you decide to run your system directly from SD card, be sure to read [Armbian's recommendations](https://docs.armbian.com/User-Guide_Getting-Started/#armbian-getting-started-guide) first.
+
+### CPU and RAM
+
+All above boards have plenty of CPU and RAM for evcc.
+1GB RAM should be enough.
+Pick 2GB if you want to be on the safe side.
 
 ## Contributing
 
