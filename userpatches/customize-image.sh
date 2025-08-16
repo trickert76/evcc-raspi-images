@@ -31,6 +31,7 @@ echo "[customize-image] hostname=$EVCC_HOSTNAME channel=$EVCC_CHANNEL tz=$TIMEZO
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
+apt-get -y full-upgrade
 
 # Base networking utils and mdns (avahi)
 apt-get install -y --no-install-recommends \
@@ -78,6 +79,16 @@ fi
 echo 'admin:admin' | chpasswd
 chage -d 0 admin || true
 usermod -aG sudo admin || true
+usermod -s /bin/bash admin || true
+
+# Ensure admin home directory exists and has correct ownership/permissions
+ADMIN_HOME=$(getent passwd admin | cut -d: -f6 || true)
+if [[ -z "${ADMIN_HOME:-}" ]]; then
+  ADMIN_HOME="/home/admin"
+fi
+mkdir -p "$ADMIN_HOME"
+chown -R admin:admin "$ADMIN_HOME"
+chmod 700 "$ADMIN_HOME"
 
 # Cockpit: enable web console on 9090
 systemctl enable cockpit.socket || true
@@ -131,5 +142,3 @@ apt-get clean || true
 rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*.deb /var/cache/apt/* || true
 
 echo "[customize-image] done"
-
-
