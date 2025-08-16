@@ -93,6 +93,14 @@ chmod 700 "$ADMIN_HOME"
 # Cockpit: enable web console on 9090
 systemctl enable cockpit.socket || true
 
+# Cockpit configuration
+mkdir -p /etc/cockpit
+cat >/etc/cockpit/cockpit.conf <<'COCKPITCONF'
+[WebService]
+LoginTo = false
+LoginTitle = "evcc Image Administration"
+COCKPITCONF
+
 # Caddy configuration with internal TLS and reverse proxy to evcc:80
 mkdir -p /etc/caddy
 cat >/etc/caddy/Caddyfile <<CADDY
