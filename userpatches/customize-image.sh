@@ -64,6 +64,9 @@ cat >/etc/ssh/sshd_config.d/99-evcc.conf <<'SSHD'
 PermitRootLogin no
 SSHD
 
+# Lock the root account to prevent any login
+passwd -l root
+
 # Disable Armbian interactive first login wizard
 systemctl disable armbian-firstlogin.service || true
 rm -f /root/.not_logged_in_yet || true
