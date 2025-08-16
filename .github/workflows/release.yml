@@ -76,6 +76,14 @@ jobs:
         run: |
           # Create minimal release notes
           echo "evcc ${{ steps.evcc-version.outputs.version }} (${{ inputs.evcc_channel }} channel) on Armbian bookworm." > release_notes.md
+          echo "" >> release_notes.md
+          echo "## Download Instructions" >> release_notes.md
+          echo "1. Download the .img.zip file for your board" >> release_notes.md
+          echo "2. Extract the zip file (right-click → Extract on Windows, or double-click on macOS)" >> release_notes.md
+          echo "3. Flash the extracted .img file to your SD card using:" >> release_notes.md
+          echo "   - **Raspberry Pi Imager** (recommended)" >> release_notes.md
+          echo "   - **Balena Etcher**" >> release_notes.md
+          echo "   - Or command line: \`dd if=image.img of=/dev/sdX bs=4M status=progress\`" >> release_notes.md
 
       - name: Create Release
         run: |

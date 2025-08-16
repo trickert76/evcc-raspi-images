@@ -91,11 +91,29 @@ jobs:
             --evcc-channel "$EVCC_CHANNEL"
           echo "::endgroup::"
 
-      - name: Upload .img artifact
+      - name: Compress .img file
+        run: |
+          # Find and compress the .img file to save storage space
+          IMG_FILE=$(find dist -name "*.img" -type f)
+          if [ -n "$IMG_FILE" ]; then
+            echo "Compressing $IMG_FILE with zip"
+            # Create zip with maximum compression, preserving the original filename
+            IMG_DIR=$(dirname "$IMG_FILE")
+            IMG_NAME=$(basename "$IMG_FILE")
+            cd "$IMG_DIR"
+            zip -9 "${IMG_NAME}.zip" "$IMG_NAME"
+            rm "$IMG_NAME"  # Remove original to save space
+            echo "Compressed to ${IMG_FILE}.zip"
+          else
+            echo "No .img file found to compress"
+            exit 1
+          fi
+
+      - name: Upload compressed .img.zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img
-          path: dist/**/${{ matrix.board }}/*.img
+          name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img.zip
+          path: dist/**/${{ matrix.board }}/*.img.zip
           if-no-files-found: error
 
       - name: Upload .img.sha artifact
