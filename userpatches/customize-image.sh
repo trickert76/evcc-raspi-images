@@ -7,16 +7,13 @@ set -euo pipefail
 
 echo "[customize-image] starting"
 
-# Get script directory
-SCRIPT_DIR="$(dirname "$0")"
-
 # Load environment variables
-echo "[customize-image] sourcing environment from $SCRIPT_DIR/load-env.sh"
-source "$SCRIPT_DIR/load-env.sh"
+echo "[customize-image] sourcing environment from /tmp/load-env.sh"
+source /tmp/load-env.sh
 
 # Execute setup scripts in order
-echo "[customize-image] executing setup scripts from $SCRIPT_DIR/setup-scripts"
-for script in "$SCRIPT_DIR"/setup-scripts/[0-9][0-9]-*.sh; do
+echo "[customize-image] executing setup scripts from /tmp/setup-scripts"
+for script in /tmp/setup-scripts/[0-9][0-9]-*.sh; do
     if [[ -f "$script" ]]; then
         echo "[customize-image] executing $(basename "$script")"
         bash "$script"

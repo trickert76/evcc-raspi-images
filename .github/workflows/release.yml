@@ -1,0 +1,93 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      evcc_channel:
+        description: "evcc APT channel (stable or nightly)"
+        required: true
+        default: "stable"
+        type: choice
+        options:
+          - stable
+          - nightly
+      release:
+        description: "Debian release for Armbian rootfs"
+        required: true
+        default: "bookworm"
+
+jobs:
+  prepare:
+    runs-on: depot-ubuntu-24.04-arm-4
+    outputs:
+      release_name: ${{ steps.release-name.outputs.name }}
+      release_tag: ${{ steps.release-name.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate release name
+        id: release-name
+        run: |
+          # Generate base name from current month and year (YYYY-MM format)
+          base_name=$(date '+%Y-%m')
+
+          # Check if release with this name already exists
+          increment=2
+          release_name="$base_name"
+          release_tag="v$base_name"
+
+          # Use GitHub CLI to check for existing releases
+          while gh release view "$release_tag" >/dev/null 2>&1; do
+            release_name="${base_name}.${increment}"
+            release_tag="v${base_name}.${increment}"
+            increment=$((increment + 1))
+          done
+
+          echo "name=$release_name" >> $GITHUB_OUTPUT
+          echo "tag=$release_tag" >> $GITHUB_OUTPUT
+          echo "Release will be named: $release_name (tag: $release_tag)"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: prepare
+    uses: ./.github/workflows/build-images.yml
+    with:
+      board: "all"
+      evcc_channel: ${{ inputs.evcc_channel }}
+      release: ${{ inputs.release }}
+
+  create-release:
+    needs: [prepare, build]
+    runs-on: depot-ubuntu-24.04-arm-4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read evcc version
+        id: evcc-version
+        run: |
+          EVCC_VERSION=$(tr -d '\n\r' < EVCC_VERSION)
+          echo "version=$EVCC_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Generate release notes
+        id: release-notes
+        run: |
+          # Create minimal release notes
+          echo "evcc ${{ steps.evcc-version.outputs.version }} (${{ inputs.evcc_channel }} channel) on Armbian ${{ inputs.release }}." > release_notes.md
+
+      - name: Create Release
+        run: |
+          # Create the release with all artifacts
+          gh release create "${{ needs.prepare.outputs.release_tag }}" \
+            --title "evcc Images ${{ needs.prepare.outputs.release_name }}" \
+            --notes-file release_notes.md \
+            ./artifacts/*/*
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
