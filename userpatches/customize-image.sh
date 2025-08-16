@@ -80,16 +80,8 @@ chage -d 0 admin || true
 usermod -aG sudo admin || true
 usermod -s /bin/bash admin || true
 
-# Ensure admin home directory exists and has correct ownership/permissions
-ADMIN_HOME="/home/admin"
-if [[ ! -d "$ADMIN_HOME" ]]; then
-  mkdir -p "$ADMIN_HOME"
-  chown admin:admin "$ADMIN_HOME"
-  chmod 755 "$ADMIN_HOME"
-else
-  # Ensure correct ownership even if directory exists
-  chown admin:admin "$ADMIN_HOME"
-fi
+# Ensure admin home directory has correct ownership
+chown admin:admin /home/admin
 
 # Enable mDNS service
 systemctl enable avahi-daemon || true
@@ -142,7 +134,7 @@ mkdir -p /etc/cockpit
 cat >/etc/cockpit/cockpit.conf <<'COCKPITCONF'
 [WebService]
 LoginTo = false
-LoginTitle = "evcc Image Administration"
+LoginTitle = "evcc"
 COCKPITCONF
 
 # Enable services

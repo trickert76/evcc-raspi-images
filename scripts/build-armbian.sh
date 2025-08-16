@@ -49,8 +49,9 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -p "$BUILDTMP/userpatches/overlay/etc"
+mkdir -p "$BUILDTMP/userpatches/overlay/home/admin"
 
-# Exported to the chroot via /etc/armbian-image.env
+# Exported to the chroot via /etc/evcc-image.env
 cat >"$BUILDTMP/userpatches/overlay/etc/evcc-image.env" <<ENV
 EVCC_CHANNEL=${EVCC_CHANNEL}
 EVCC_HOSTNAME=${HOSTNAME}
@@ -83,6 +84,9 @@ pushd "$BUILD_DIR" >/dev/null
   SHARE_LOG=yes \
   USE_TORRENT=no \
   OFFLINE_WORK=no \
+  VENDOR="evcc" \
+  VENDORURL="https://evcc.io" \
+  IMAGE_SUFFIX="evcc-${EVCC_VERSION}" \
   ./compile.sh \
     BOARD="$BOARD" \
     BRANCH=current \
