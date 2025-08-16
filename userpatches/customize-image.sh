@@ -78,13 +78,15 @@ usermod -aG sudo admin || true
 usermod -s /bin/bash admin || true
 
 # Ensure admin home directory exists and has correct ownership/permissions
-ADMIN_HOME=$(getent passwd admin | cut -d: -f6 || true)
-if [[ -z "${ADMIN_HOME:-}" ]]; then
-  ADMIN_HOME="/home/admin"
+ADMIN_HOME="/home/admin"
+if [[ ! -d "$ADMIN_HOME" ]]; then
+  mkdir -p "$ADMIN_HOME"
+  chown admin:admin "$ADMIN_HOME"
+  chmod 755 "$ADMIN_HOME"
+else
+  # Ensure correct ownership even if directory exists
+  chown admin:admin "$ADMIN_HOME"
 fi
-mkdir -p "$ADMIN_HOME"
-chown -R admin:admin "$ADMIN_HOME"
-chmod 700 "$ADMIN_HOME"
 
 # Enable mDNS service
 systemctl enable avahi-daemon || true
