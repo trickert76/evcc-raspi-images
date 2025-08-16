@@ -3,6 +3,16 @@ name: Create Release
 on:
   workflow_dispatch:
     inputs:
+      board:
+        description: "Target board to build (or all)"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - rpi4b
+          - radxa-e52c
+          - nanopi-r3s
       evcc_channel:
         description: "evcc APT channel (stable or nightly)"
         required: true
@@ -11,16 +21,37 @@ on:
         options:
           - stable
           - nightly
+      draft:
+        description: "Create as draft release for testing"
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   prepare:
     runs-on: depot-ubuntu-24.04-arm-4
     outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
       release_name: ${{ steps.release-name.outputs.name }}
       release_tag: ${{ steps.release-name.outputs.tag }}
+      release_id: ${{ steps.create-release.outputs.id }}
+      release_upload_url: ${{ steps.create-release.outputs.upload_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Compute matrix
+        id: set-matrix
+        run: |
+          choice='${{ inputs.board }}'
+          case "$choice" in
+            all)      MATRIX='["rpi4b","radxa-e52c","nanopi-r3s"]' ;;
+            rpi4b)    MATRIX='["rpi4b"]' ;;
+            radxa-e52c) MATRIX='["radxa-e52c"]' ;;
+            nanopi-r3s) MATRIX='["nanopi-r3s"]' ;;
+            *) echo "Unknown board: $choice" >&2; exit 1 ;;
+          esac
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
       - name: Generate release name
         id: release-name
@@ -46,51 +77,108 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build:
-    needs: prepare
-    uses: ./.github/workflows/build-images.yml
-    with:
-      board: "all"
-      evcc_channel: ${{ inputs.evcc_channel }}
-
-  create-release:
-    needs: [prepare, build]
-    runs-on: depot-ubuntu-24.04-arm-4
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Read evcc version
         id: evcc-version
         run: |
           EVCC_VERSION=$(tr -d '\n\r' < EVCC_VERSION)
           echo "version=$EVCC_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./artifacts
-
       - name: Generate release notes
-        id: release-notes
         run: |
-          # Create minimal release notes
           echo "evcc ${{ steps.evcc-version.outputs.version }} (${{ inputs.evcc_channel }} channel) on Armbian bookworm." > release_notes.md
-          echo "" >> release_notes.md
-          echo "## Download Instructions" >> release_notes.md
-          echo "1. Download the .img.zip file for your board" >> release_notes.md
-          echo "2. Extract the zip file (right-click → Extract on Windows, or double-click on macOS)" >> release_notes.md
-          echo "3. Flash the extracted .img file to your SD card using:" >> release_notes.md
-          echo "   - **Raspberry Pi Imager** (recommended)" >> release_notes.md
-          echo "   - **Balena Etcher**" >> release_notes.md
-          echo "   - Or command line: \`dd if=image.img of=/dev/sdX bs=4M status=progress\`" >> release_notes.md
 
       - name: Create Release
-        run: |
-          # Create the release with all artifacts
-          gh release create "${{ needs.prepare.outputs.release_tag }}" \
-            --title "evcc Images ${{ needs.prepare.outputs.release_name }}" \
-            --notes-file release_notes.md \
-            ./artifacts/*/*
+        id: create-release
+        uses: actions/create-release@v1
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release-name.outputs.tag }}
+          release_name: evcc Images ${{ steps.release-name.outputs.name }}
+          body_path: release_notes.md
+          draft: ${{ inputs.draft }}
+          prerelease: false
+
+  build:
+    needs: prepare
+    runs-on: depot-ubuntu-24.04-arm-4
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        board: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    name: Build ${{ matrix.board }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare Docker and workspace
+        run: |
+          mkdir -p dist logs
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static binfmt-support xz-utils zip
+
+      - name: Read evcc version
+        id: evcc-version
+        run: |
+          EVCC_VERSION=$(tr -d '\n\r' < EVCC_VERSION)
+          echo "version=$EVCC_VERSION" >> $GITHUB_OUTPUT
+          echo "EVCC_VERSION=$EVCC_VERSION" >> $GITHUB_ENV
+
+      - name: Build image
+        env:
+          EVCC_CHANNEL: ${{ inputs.evcc_channel }}
+        run: |
+          set -euo pipefail
+          chmod +x ./scripts/build-armbian.sh
+          echo "::group::Building for ${{ matrix.board }}"
+          bash ./scripts/build-armbian.sh \
+            --board "${{ matrix.board }}" \
+            --evcc-channel "$EVCC_CHANNEL"
+          echo "::endgroup::"
+
+      - name: Compress .img file
+        run: |
+          IMG_FILE=$(find dist -name "*.img" -type f)
+          [ -z "$IMG_FILE" ] && { echo "No .img file found"; exit 1; }
+
+          cd "$(dirname "$IMG_FILE")"
+          zip -9 "$(basename "$IMG_FILE").zip" "$(basename "$IMG_FILE")"
+          rm "$(basename "$IMG_FILE")"
+
+      - name: Find built files
+        id: find-files
+        run: |
+          echo "img_zip=$(find dist -name "*.img.zip" -type f)" >> $GITHUB_OUTPUT
+          echo "sha_file=$(find dist -name "*.img.sha" -type f)" >> $GITHUB_OUTPUT
+          echo "txt_file=$(find dist -name "*.img.txt" -type f)" >> $GITHUB_OUTPUT
+
+      - name: Upload compressed image to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare.outputs.release_upload_url }}
+          asset_path: ${{ steps.find-files.outputs.img_zip }}
+          asset_name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img.zip
+          asset_content_type: application/zip
+
+      - name: Upload SHA file to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare.outputs.release_upload_url }}
+          asset_path: ${{ steps.find-files.outputs.sha_file }}
+          asset_name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img.sha
+          asset_content_type: text/plain
+
+      - name: Upload TXT file to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.prepare.outputs.release_upload_url }}
+          asset_path: ${{ steps.find-files.outputs.txt_file }}
+          asset_name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img.txt
+          asset_content_type: text/plain
