@@ -44,8 +44,12 @@ mkdir -p "$REPO_ROOT/dist" "$REPO_ROOT/logs"
 # Prepare a temporary userpatches with variables passed to customize-image.sh
 BUILDTMP=$(mktemp -d)
 cleanup() {
-  # The Armbian build may create root-owned cache files; don't fail on cleanup.
-  sudo rm -rf "$BUILDTMP" || true
+  # The Armbian build may create root-owned cache files; try regular rm first, then sudo if needed
+  rm -rf "$BUILDTMP" 2>/dev/null || sudo rm -rf "$BUILDTMP" 2>/dev/null || true
+  # Clean up macOS-specific build directory
+  if [[ "$(uname)" == "Darwin" && -n "$BUILD_DIR" && "$BUILD_DIR" =~ ^$HOME/\.armbian-build- ]]; then
+    rm -rf "$BUILD_DIR" 2>/dev/null || sudo rm -rf "$BUILD_DIR" 2>/dev/null || true
+  fi
 }
 trap cleanup EXIT
 mkdir -p "$BUILDTMP/userpatches/overlay/etc"
@@ -65,7 +69,12 @@ IMAGE_OUT_DIR="$REPO_ROOT/dist/${BOARD}"
 mkdir -p "$IMAGE_OUT_DIR"
 
 # Clone Armbian build framework and run it in Docker mode (it will build its own container image).
-BUILD_DIR="$BUILDTMP/build"
+# On macOS, Armbian requires the build directory to be under the home directory
+if [[ "$(uname)" == "Darwin" ]]; then
+  BUILD_DIR="$HOME/.armbian-build-$(date +%s)"
+else
+  BUILD_DIR="$BUILDTMP/build"
+fi
 git clone --depth=1 https://github.com/armbian/build.git "$BUILD_DIR"
 
 # Place our userpatches into the build tree
