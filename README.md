@@ -15,14 +15,14 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 - 📶 [comitup](https://github.com/davesteele/comitup) for WiFi setup without ethernet
 - 🐧 [Armbian](https://www.armbian.com) base image and build system
 
-## How to use
+## Getting Started
 
-- Download your image file from [releases](https://github.com/evcc-io/images/releases).
-- Flash your image to an SD card using [balenaEtcher](https://www.balena.io/etcher/) or [USBImager](https://gitlab.com/bztsrc/usbimager).
-- Insert your SD card and connect your device with power and ethernet.
-- Navigate to `https://evcc.local/` in your browser. Accept the self-signed certificate.
-- You should see the evcc web interface.
-- Alternatively: Use the [evcc iOS/Android app](http://github.com/evcc-io/app) to connect to your evcc instance.
+1. Download your image file from [releases](https://github.com/evcc-io/images/releases).
+2. Flash your image to an SD card using [balenaEtcher](https://www.balena.io/etcher/) or [USBImager](https://gitlab.com/bztsrc/usbimager).
+3. Insert your SD card and connect your device with power and ethernet.
+4. Navigate to `https://evcc.local/` in your browser. Accept the self-signed certificate.
+5. You should see the evcc web interface.
+6. Alternatively: Use the [evcc iOS/Android app](http://github.com/evcc-io/app) to connect to your evcc instance.
 
 ## Administration
 
@@ -70,12 +70,13 @@ For reliability we **strongly suggest** using a **wired ethernet connection**.
 If a wired setup is not possible this image also includes a wireless setup process.
 The device will create a WiFi setup hotspot **only if no internet connection is detected after 30 seconds of boot**.
 
-1. **With ethernet**: No hotspot appears - direct access to evcc
-2. **Without internet**: Wait 30 seconds, then connect to `evcc-setup` network from your phone or laptop
-3. Configure your WiFi via the automatically presented setup page
-4. Connect to your home network and access evcc at `https://evcc.local/`
+1. Power your device with ethernet connected
+2. Connect to `evcc-setup` network from your phone or laptop
+3. Select your WiFi network and enter the password
+4. Connect back to your home network
+5. Continue with step 4 from [Getting Started](#getting-started)
 
-**Note**: WiFi setup is a one-time process. To reconfigure WiFi at a new location, simply reboot the device.
+**Note**: WiFi setup is a one-time process. To reconfigure WiFi at a new location, simply reboot the device and `evcc-setup` will appear again.
 
 ## Contributing
 

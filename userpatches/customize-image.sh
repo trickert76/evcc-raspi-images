@@ -77,7 +77,7 @@ if ! id -u admin >/dev/null 2>&1; then
 fi
 echo 'admin:admin' | chpasswd
 chage -d 0 admin || true
-usermod -aG sudo admin || true
+usermod -aG sudo,netdev admin || true
 
 # Ensure home directory exists with files
 mkdir -p /home/admin
@@ -277,6 +277,24 @@ cat >/etc/cockpit/cockpit.conf <<'COCKPITCONF'
 LoginTo = false
 LoginTitle = "evcc"
 COCKPITCONF
+
+# Configure PolicyKit to allow netdev group to manage system NetworkManager connections
+mkdir -p /etc/polkit-1/localauthority/50-local.d
+cat >/etc/polkit-1/localauthority/50-local.d/10-networkmanager.pkla <<'NETWORKMANAGERPOLICY'
+[Allow NetworkManager system modifications]
+Identity=unix-group:netdev
+Action=org.freedesktop.NetworkManager.settings.modify.system
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+
+[Allow NetworkManager connection management]
+Identity=unix-group:netdev
+Action=org.freedesktop.NetworkManager.settings.modify.own
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+NETWORKMANAGERPOLICY
 
 # Enable services
 systemctl enable cockpit.socket || true
