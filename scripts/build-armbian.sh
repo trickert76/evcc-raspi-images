@@ -53,7 +53,7 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -p "$BUILDTMP/userpatches/overlay/etc"
-mkdir -p "$BUILDTMP/userpatches/overlay/home/admin"
+
 
 # Exported to the chroot via /etc/evcc-image.env
 cat >"$BUILDTMP/userpatches/overlay/etc/evcc-image.env" <<ENV
@@ -75,7 +75,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 else
   BUILD_DIR="$BUILDTMP/build"
 fi
-git clone --depth=1 https://github.com/armbian/build.git "$BUILD_DIR"
+git clone --depth=1 --branch v25.8.1 https://github.com/armbian/build.git "$BUILD_DIR"
 
 # Place our userpatches into the build tree
 rm -rf "$BUILD_DIR/userpatches"

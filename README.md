@@ -68,14 +68,14 @@ For reliability we **strongly suggest** using a **wired ethernet connection**.
 ### Wireless Setup
 
 If a wired setup is not possible this image also includes a wireless setup process.
-The device creates a temporary hotspot when no ethernet is connected and no WiFi is configured or reachable.
+The device will create a WiFi setup hotspot **only if no internet connection is detected after 30 seconds of boot**.
 
-1. Connect to `evcc-setup` network from your phone or laptop
-2. Configure your WiFi via the automatically presented setup page
-3. Connect to your home network
-4. Access evcc at `https://evcc.local/` once connected
+1. **With ethernet**: No hotspot appears - direct access to evcc
+2. **Without internet**: Wait 30 seconds, then connect to `evcc-setup` network from your phone or laptop
+3. Configure your WiFi via the automatically presented setup page
+4. Connect to your home network and access evcc at `https://evcc.local/`
 
-**Note**: Hotspot disables after 60 minutes or first internet connection. Use Cockpit to manage WiFi later.
+**Note**: WiFi setup is a one-time process. To reconfigure WiFi at a new location, simply reboot the device.
 
 ## Contributing
 

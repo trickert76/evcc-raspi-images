@@ -3,6 +3,7 @@
 .idea/
 .vscode/
 *.swp
+.claude/
 
 # Python / shell artifacts
 __pycache__/
