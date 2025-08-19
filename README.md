@@ -52,7 +52,7 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 
 16GB storage should be enough when only using evcc.
 We recommend running your system from eMMC instead of SD card.
-**Radxa E52C and NanoPi R3S come with built-in eMMC storage.**
+**Radxa and NanoPi boards come with built-in eMMC storage.**
 If you decide to run your system directly from SD card, be sure to read [Armbian's recommendations](https://docs.armbian.com/User-Guide_Getting-Started/#armbian-getting-started-guide) first.
 
 ### CPU and RAM
@@ -67,16 +67,21 @@ For reliability we **strongly suggest** using a **wired ethernet connection**.
 
 ### Wireless Setup
 
-If a wired setup is not possible this image also includes a wireless setup process.
-The device will create a WiFi setup hotspot **only if no internet connection is detected after 30 seconds of boot**.
+If a wired setup is not possible this image also includes a wireless onboarding process.
+The device will create a WiFi setup hotspot **if no internet connection is detected after 30 seconds of boot**.
 
-1. Power your device with ethernet connected
+1. Power your device
 2. Connect to `evcc-setup` network from your phone or laptop
 3. Select your WiFi network and enter the password
 4. Connect back to your home network
 5. Continue with step 4 from [Getting Started](#getting-started)
 
 **Note**: WiFi setup is a one-time process. To reconfigure WiFi at a new location, simply reboot the device and `evcc-setup` will appear again.
+
+For ethernet-only boards like the Radxa and NanoPi, you can use WiFi USB dongles. The following adapters have been tested successfully:
+
+- EDUP EP-B8508GS
+- _add your's here ..._
 
 ## Contributing
 
