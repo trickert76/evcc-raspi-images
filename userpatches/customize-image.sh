@@ -73,20 +73,29 @@ rm -f /root/.not_logged_in_yet || true
 
 # Create admin user with initial password and require password change on first login
 if ! id -u admin >/dev/null 2>&1; then
-  useradd -m -s /bin/bash admin
+  useradd -M -s /bin/bash admin  # -M to skip home directory creation
 fi
 echo 'admin:admin' | chpasswd
 chage -d 0 admin || true
 usermod -aG sudo,netdev admin || true
 
-# Ensure home directory exists with files
-mkdir -p /home/admin
-if [[ -d /tmp/overlay/home/admin ]]; then
-  cp -a /tmp/overlay/home/admin/. /home/admin/
-else
-  echo 'alias ll="ls -alF"' > /home/admin/.bashrc
-fi
-chown -R admin:admin /home/admin
+# Create home directory on first boot (since it doesn't persist during build)
+cat >/etc/systemd/system/admin-home-setup.service <<'EOF'
+[Unit]
+Description=Create admin home directory on first boot
+ConditionPathExists=!/home/admin
+Before=getty@tty1.service ssh.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash -c 'mkdir -p /home/admin && cp -r /etc/skel/. /home/admin/ 2>/dev/null || true && chown -R admin:admin /home/admin && chmod 755 /home/admin'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable admin-home-setup.service
 
 # Enable mDNS service
 systemctl enable avahi-daemon || true
@@ -165,19 +174,34 @@ if [[ "$INTERNET_AVAILABLE" == "false" ]]; then
     fi
 fi
 
-# Start AP only if no internet detected
+# Start AP only if no internet detected AND WiFi hardware exists
 if [[ "$INTERNET_AVAILABLE" == "false" ]]; then
-    # Unmask comitup first in case it was masked from previous boot
-    systemctl unmask comitup.service >/dev/null 2>&1 || true
-    systemctl enable comitup.service >/dev/null 2>&1 || true
-    systemctl start comitup.service >/dev/null 2>&1 || true
-    echo "No internet detected - WiFi setup AP started"
+    # Check if WiFi hardware exists
+    if ls /sys/class/net/wl* >/dev/null 2>&1 || iwconfig 2>/dev/null | grep -q "IEEE 802.11"; then
+        # Unmask comitup first in case it was masked from previous boot
+        systemctl unmask comitup.service >/dev/null 2>&1 || true
+        systemctl enable comitup.service >/dev/null 2>&1 || true
+        systemctl start comitup.service >/dev/null 2>&1 || true
+        echo "No internet detected - WiFi setup AP started"
+    else
+        echo "No internet detected but no WiFi hardware found - skipping WiFi setup"
+    fi
 else
     # Internet available - ensure comitup is stopped and cleanup hotspot
     echo "Stopping comitup service..."
-    systemctl stop comitup.service 2>&1 || echo "Stop failed"
-    systemctl disable comitup.service 2>&1 || echo "Disable failed"  
-    systemctl mask comitup.service 2>&1 || echo "Mask failed"
+    
+    # First try graceful stop with timeout
+    timeout 10 systemctl stop comitup.service 2>&1 || {
+        echo "Graceful stop failed, forcing kill..."
+        systemctl kill comitup.service 2>&1 || true
+        sleep 2
+    }
+    
+    # Reset any failed state before disabling
+    systemctl reset-failed comitup.service 2>&1 || true
+    
+    # Just disable, don't mask - this prevents "failed" status in Cockpit
+    systemctl disable comitup.service 2>&1 || echo "Disable failed"
     
     # Clean up any active hotspot connections
     HOTSPOT_CONN=$(nmcli -t -f NAME connection show --active | grep "evcc-setup" || true)
@@ -278,9 +302,30 @@ LoginTo = false
 LoginTitle = "evcc"
 COCKPITCONF
 
-# Configure PolicyKit to allow netdev group to manage system NetworkManager connections
+# Configure PolicyKit to allow netdev group to manage NetworkManager
 mkdir -p /etc/polkit-1/localauthority/50-local.d
 cat >/etc/polkit-1/localauthority/50-local.d/10-networkmanager.pkla <<'NETWORKMANAGERPOLICY'
+[Allow WiFi scanning]
+Identity=unix-group:netdev
+Action=org.freedesktop.NetworkManager.wifi.scan
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+
+[Allow WiFi control]
+Identity=unix-group:netdev
+Action=org.freedesktop.NetworkManager.enable-disable-wifi
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+
+[Allow network control]
+Identity=unix-group:netdev
+Action=org.freedesktop.NetworkManager.network-control
+ResultAny=yes
+ResultInactive=yes
+ResultActive=yes
+
 [Allow NetworkManager system modifications]
 Identity=unix-group:netdev
 Action=org.freedesktop.NetworkManager.settings.modify.system
