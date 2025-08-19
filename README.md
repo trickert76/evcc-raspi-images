@@ -12,6 +12,7 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 - ☀️🚗 [evcc](https://evcc.io) for smart energy management
 - 🔒 [Caddy](https://caddyserver.com) reverse proxy for HTTPS
 - 🛠️ [Cockpit](https://cockpit-project.org) web console for administration
+- 📶 [comitup](https://github.com/davesteele/comitup) for WiFi setup without ethernet
 - 🐧 [Armbian](https://www.armbian.com) base image and build system
 
 ## How to use
@@ -59,6 +60,22 @@ If you decide to run your system directly from SD card, be sure to read [Armbian
 All above boards have plenty of CPU and RAM for evcc.
 1GB RAM should be enough.
 Pick 2GB if you want to be on the safe side.
+
+## Network Recommendations
+
+For reliability we **strongly suggest** using a **wired ethernet connection**.
+
+### Wireless Setup
+
+If a wired setup is not possible this image also includes a wireless setup process.
+The device creates a temporary hotspot when no ethernet is connected and no WiFi is configured or reachable.
+
+1. Connect to `evcc-setup` network from your phone or laptop
+2. Configure your WiFi via the automatically presented setup page
+3. Connect to your home network
+4. Access evcc at `https://evcc.local/` once connected
+
+**Note**: Hotspot disables after 60 minutes or first internet connection. Use Cockpit to manage WiFi later.
 
 ## Contributing
 

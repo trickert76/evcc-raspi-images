@@ -45,7 +45,7 @@ apt-get -y full-upgrade
 apt-get install -y --no-install-recommends \
   curl ca-certificates gnupg apt-transport-https \
   avahi-daemon avahi-utils libnss-mdns \
-  sudo
+  sudo network-manager python3-gi python3-dbus
 
 # Set timezone
 apt-get install -y --no-install-recommends tzdata
@@ -91,6 +91,218 @@ test -d /root || mkdir -p /root
 chown -R root:root /root
 
 # ============================================================================
+# COMITUP WIFI SETUP
+# ============================================================================
+echo "[customize-image] setting up comitup for wifi configuration"
+
+# Install latest comitup from official repository (fixes device type compatibility)
+curl -L -o /tmp/davesteele-comitup-apt-source.deb \
+  "https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.3_all.deb"
+dpkg -i /tmp/davesteele-comitup-apt-source.deb || apt-get install -f -y
+apt-get update
+apt-get install -y --no-install-recommends comitup
+rm -f /tmp/davesteele-comitup-apt-source.deb
+
+# Clean up any potential interface conflicts
+rm -f /etc/network/interfaces || true
+
+# Mask conflicting services as recommended
+# Note: Don't mask dnsmasq as comitup needs it for DHCP in AP mode
+# Don't mask dnsmasq - comitup needs it for DHCP in AP mode
+# Configure systemd-resolved to not conflict with dnsmasq
+systemctl mask dhcpcd.service || true
+systemctl mask wpa-supplicant.service || true
+
+# Configure systemd-resolved to not use port 53
+mkdir -p /etc/systemd/resolved.conf.d
+cat >/etc/systemd/resolved.conf.d/comitup.conf <<'RESOLVEDCONF'
+[Resolve]
+# Don't bind to port 53 - let dnsmasq use it for AP mode
+DNSStubListener=no
+RESOLVEDCONF
+
+# Ensure dnsmasq is available but not auto-starting (comitup will manage it)
+systemctl disable dnsmasq.service || true
+systemctl stop dnsmasq.service || true
+
+# Create minimal dnsmasq configuration for comitup DHCP
+mkdir -p /etc/dnsmasq.d
+cat >/etc/dnsmasq.d/comitup.conf <<'DNSMASQCONF'
+bind-interfaces
+dhcp-range=10.42.0.10,10.42.0.50,255.255.255.0,12h
+dhcp-option=3,10.42.0.1
+dhcp-option=6,10.42.0.1
+port=0
+no-resolv
+no-poll
+DNSMASQCONF
+
+# Ensure NetworkManager is enabled (already installed earlier)
+systemctl enable NetworkManager.service || true
+
+# Ensure hostapd is available for AP mode
+systemctl disable hostapd.service || true
+systemctl stop hostapd.service || true
+
+# Configure comitup with minimal evcc-specific settings
+cat >/etc/comitup.conf <<'COMITUPCONF'
+ap_name: evcc-setup
+ap_timeout: 3600
+external_callback: /usr/local/bin/comitup-callback.sh
+ap_ip: 10.42.0.1
+ap_ip_start: 10.42.0.10
+ap_ip_end: 10.42.0.50
+enable_appliance_mode: true
+COMITUPCONF
+
+# Create callback script to manage evcc service during wifi setup
+cat >/usr/local/bin/comitup-callback.sh <<'CALLBACK'
+#!/bin/bash
+# comitup callback script - temporarily manages evcc during WiFi setup
+
+STATE="$1"
+SSID="$2"
+
+case "$STATE" in
+    HOTSPOT)
+        # Stop evcc service when entering hotspot mode to free port 80
+        systemctl stop evcc || true
+        echo "$(date): Entered HOTSPOT mode - stopped evcc service"
+        ;;
+    CONNECTING)
+        echo "$(date): Connecting to WiFi: $SSID"
+        ;;
+    CONNECTED)
+        # Stop comitup services to free port 80
+        systemctl stop comitup-web.service || true
+        systemctl disable comitup.service || true
+        systemctl disable comitup-web.service || true
+        
+        # Start evcc service when connected to wifi
+        systemctl start evcc || true
+        echo "$(date): Connected to WiFi: $SSID - started evcc service"
+        
+        # Mark that we've seen internet connection (prevent future AP mode)
+        touch /var/lib/comitup/internet-seen
+        ;;
+    FAIL)
+        echo "$(date): Failed to connect to WiFi: $SSID"
+        ;;
+esac
+CALLBACK
+
+chmod +x /usr/local/bin/comitup-callback.sh
+
+# Create systemd service to check internet connectivity and manage comitup startup
+cat >/etc/systemd/system/evcc-comitup-manager.service <<'MANAGER'
+[Unit]
+Description=evcc WiFi Setup Manager (enables comitup only when needed)
+After=NetworkManager.service
+Before=comitup.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/evcc-comitup-manager.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+MANAGER
+
+# Create the manager script
+cat >/usr/local/bin/evcc-comitup-manager.sh <<'MANAGERSH'
+#!/bin/bash
+# evcc WiFi manager - enables comitup AP mode only when no network connectivity
+
+INTERNET_SEEN_FILE="/var/lib/comitup/internet-seen"
+LOG_FILE="/var/log/evcc-comitup.log"
+
+log() {
+    echo "$(date): $*" | tee -a "$LOG_FILE"
+}
+
+# Create comitup state directory
+mkdir -p /var/lib/comitup
+
+# Give network interfaces time to initialize (avoid 2min systemd wait)
+sleep 10
+
+# Check if we've seen internet before
+if [[ -f "$INTERNET_SEEN_FILE" ]]; then
+    log "Internet connection seen before - disabling comitup AP mode"
+    systemctl disable comitup.service || true
+    systemctl stop comitup.service || true
+    systemctl enable evcc.service || true
+    exit 0
+fi
+
+# Check for ethernet connection
+ETH_CONNECTED=false
+for iface in $(ls /sys/class/net/ | grep -E '^(eth|en)'); do
+    if [[ -f "/sys/class/net/$iface/carrier" ]] && [[ "$(cat /sys/class/net/$iface/carrier 2>/dev/null)" == "1" ]]; then
+        ETH_CONNECTED=true
+        log "Ethernet connection detected on $iface"
+        break
+    fi
+done
+
+# Check for WiFi configuration
+WIFI_CONFIGURED=false
+if nmcli -t -f TYPE,AUTOCONNECT connection show | grep -q "802-11-wireless:yes"; then
+    WIFI_CONFIGURED=true
+    log "WiFi configuration found"
+fi
+
+# Decide whether to start comitup (evcc runs by default, comitup only when needed)
+if [[ "$ETH_CONNECTED" == "true" ]]; then
+    log "Ethernet connected - evcc will run normally, comitup not needed"
+    systemctl disable comitup.service || true
+    systemctl stop comitup.service || true
+elif [[ "$WIFI_CONFIGURED" == "true" ]]; then
+    # WiFi is configured, try to connect
+    log "WiFi configured - attempting connection"
+    # Give NetworkManager some time to connect
+    sleep 10
+    
+    # Check if we got internet
+    if ping -c 1 -W 5 8.8.8.8 >/dev/null 2>&1; then
+        log "WiFi connected with internet - evcc will run normally, comitup not needed"
+        touch "$INTERNET_SEEN_FILE"
+        systemctl disable comitup.service || true
+        systemctl stop comitup.service || true
+    else
+        log "WiFi configured but no connection - enabling comitup AP mode"
+        systemctl enable comitup.service || true
+        # Note: comitup callback will handle stopping/starting evcc as needed
+    fi
+else
+    log "No ethernet, no WiFi configured - enabling comitup AP mode"
+    systemctl enable comitup.service || true
+    # Note: comitup callback will handle stopping/starting evcc as needed
+fi
+MANAGERSH
+
+chmod +x /usr/local/bin/evcc-comitup-manager.sh
+
+# Enable the manager service
+systemctl enable evcc-comitup-manager.service || true
+
+# Create NetworkManager configuration for comitup compatibility
+cat >/etc/NetworkManager/conf.d/comitup.conf <<'NMCONF'
+[main]
+unmanaged-devices=interface-name:comitup-*,type:wifi-p2p
+
+[device]
+wifi.scan-rand-mac-address=no
+
+[connectivity]
+uri=http://detectportal.firefox.com/canonical.html
+interval=300
+NMCONF
+
+# evcc is the primary service - it will be enabled by default in the evcc setup section
+
+# ============================================================================
 # EVCC SETUP
 # ============================================================================
 echo "[customize-image] setting up evcc"
@@ -111,7 +323,6 @@ if [[ ! -f /etc/evcc.yaml ]]; then
 network:
   schema: https
   host: ${EVCC_HOSTNAME}.local
-  port: 80
 YAML
 fi
 
@@ -127,7 +338,7 @@ echo "[customize-image] setting up cockpit"
 apt-get install -y --no-install-recommends \
   cockpit cockpit-pcp \
   packagekit cockpit-packagekit \
-  cockpit-networkmanager network-manager
+  cockpit-networkmanager
 
 # Cockpit configuration
 mkdir -p /etc/cockpit
