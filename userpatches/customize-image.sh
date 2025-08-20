@@ -302,44 +302,16 @@ LoginTo = false
 LoginTitle = "evcc"
 COCKPITCONF
 
-# Configure PolicyKit to allow netdev group to manage NetworkManager
-mkdir -p /etc/polkit-1/localauthority/50-local.d
-cat >/etc/polkit-1/localauthority/50-local.d/10-networkmanager.pkla <<'NETWORKMANAGERPOLICY'
-[Allow WiFi scanning]
-Identity=unix-group:netdev
-Action=org.freedesktop.NetworkManager.wifi.scan
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-
-[Allow WiFi control]
-Identity=unix-group:netdev
-Action=org.freedesktop.NetworkManager.enable-disable-wifi
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-
-[Allow network control]
-Identity=unix-group:netdev
-Action=org.freedesktop.NetworkManager.network-control
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-
-[Allow NetworkManager system modifications]
-Identity=unix-group:netdev
-Action=org.freedesktop.NetworkManager.settings.modify.system
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-
-[Allow NetworkManager connection management]
-Identity=unix-group:netdev
-Action=org.freedesktop.NetworkManager.settings.modify.own
-ResultAny=yes
-ResultInactive=yes
-ResultActive=yes
-NETWORKMANAGERPOLICY
+# Simple PolicyKit rule - admin user can do everything without authentication
+mkdir -p /etc/polkit-1/rules.d
+cat >/etc/polkit-1/rules.d/10-admin.rules <<'POLKIT'
+// Admin user has full system access without password prompts
+polkit.addRule(function(action, subject) {
+    if (subject.user == "admin") {
+        return polkit.Result.YES;
+    }
+});
+POLKIT
 
 # Enable services
 systemctl enable cockpit.socket || true
