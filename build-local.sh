@@ -9,26 +9,22 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 REPO_ROOT="$SCRIPT_DIR"
 
 BOARD=""
-EVCC_CHANNEL="stable"
 
 usage() {
   cat <<EOF
-Usage: $0 --board <board> [--channel <channel>]
+Usage: $0 --board <board>
 
 Build evcc images locally using Docker (mimics GitHub Actions workflow)
 
 Arguments:
-  --board <board>      Target board (rpi4b, radxa-e52c, nanopi-r3s)
-  --channel <channel>  evcc channel: stable or nightly (default: stable)
+  --board <board>      Target board (rpi4b, nanopi-r3s)
 
 Examples:
   ./build-local.sh --board rpi4b
-  ./build-local.sh --board rpi4b --channel nightly
-  ./build-local.sh --board radxa-e52c
+  ./build-local.sh --board nanopi-r3s
 
 Supported boards:
   - rpi4b        Raspberry Pi 4B
-  - radxa-e52c   Radxa E52C
   - nanopi-r3s   NanoPi R3S
 
 EOF
@@ -61,39 +57,23 @@ check_requirements() {
 
 validate_board() {
   case "$BOARD" in
-    rpi4b|radxa-e52c|nanopi-r3s)
+    rpi4b|nanopi-r3s)
       echo "✅ Board '$BOARD' is supported"
       ;;
     *)
       echo "❌ Unsupported board: '$BOARD'"
-      echo "Supported boards: rpi4b, radxa-e52c, nanopi-r3s"
+      echo "Supported boards: rpi4b, nanopi-r3s"
       exit 1
       ;;
   esac
 }
 
-validate_channel() {
-  case "$EVCC_CHANNEL" in
-    stable|nightly)
-      echo "✅ Channel '$EVCC_CHANNEL' is valid"
-      ;;
-    *)
-      echo "❌ Invalid channel: '$EVCC_CHANNEL'"
-      echo "Valid channels: stable, nightly"
-      exit 1
-      ;;
-  esac
-}
 
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --board)
         BOARD="$2"
-        shift 2
-        ;;
-      --channel)
-        EVCC_CHANNEL="$2"
         shift 2
         ;;
       -h|--help)
@@ -121,28 +101,15 @@ setup_environment() {
   # Create required directories
   mkdir -p "$REPO_ROOT/dist" "$REPO_ROOT/logs"
   
-  # Read evcc version
-  if [[ -f "$REPO_ROOT/EVCC_VERSION" ]]; then
-    EVCC_VERSION=$(tr -d '\n\r' < "$REPO_ROOT/EVCC_VERSION")
-    echo "📦 evcc version: $EVCC_VERSION"
-  else
-    echo "❌ EVCC_VERSION file not found"
-    exit 1
-  fi
-  
   echo "🎯 Target: $BOARD"
-  echo "📡 Channel: $EVCC_CHANNEL"
 }
 
 build_image() {
   echo "🚀 Starting image build..."
   echo "⏰ This may take 30-60 minutes depending on your hardware..."
   
-  # Set environment for build script
-  export EVCC_CHANNEL
-  
-  # Run the build script
-  if ! bash "$REPO_ROOT/scripts/build-armbian.sh" --board "$BOARD" --evcc-channel "$EVCC_CHANNEL"; then
+  # Run the build script with 'local' as release name for local builds
+  if ! bash "$REPO_ROOT/scripts/build-armbian.sh" --board "$BOARD" --release-name "local"; then
     echo "❌ Build failed"
     exit 1
   fi
@@ -175,7 +142,6 @@ main() {
   parse_args "$@"
   check_requirements
   validate_board
-  validate_channel
   setup_environment
   
   # Set up cleanup trap

@@ -2,10 +2,10 @@
 
 [![Built with Depot](https://depot.dev/badges/built-with-depot.svg)](https://depot.dev/?utm_source=evcc)
 
-> **⚠️ Still experimental, feedback welcome!**  
-> These images are currently in experimental phase. Please [report any issues](https://github.com/evcc-io/images/issues) or share your feedback to help us improve.
+> **📦 Beta Release**  
+> These images are working well but we're still in beta. Please [report any issues](https://github.com/evcc-io/images/issues) to help us reach stable.
 
-Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popular single-board computers like Raspberry Pi, Radxa and NanoPi.
+Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popular single-board computers like Raspberry Pi and NanoPi.
 
 ## Image contents
 
@@ -41,7 +41,6 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 | [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)            | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                                                                                                                                        |
 | [Raspberry Pi 3b](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)           | ⚠️     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                                                                                                                                        |
 | [NanoPi R3S](https://www.friendlyelec.com/index.php?route=product/product&product_id=311) | ✅     | [`nanopi-r3s`](https://github.com/evcc-io/images/releases) | see above, [then copy to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation)                                                                                                                |
-| [Radxa E52C](https://radxa.com/products/network-computer/e52c/)                           | ✅     | [`radxa-e52c`](https://github.com/evcc-io/images/releases) | see above, [then copy to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation)<br/>alternative: [flash directly to eMMC](https://docs.radxa.com/en/e/e52c/getting-started/install-os/maskrom) |
 
 ✅ tested<br/>
 ⚠️ untested (but should work)
@@ -52,7 +51,7 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 
 16GB storage should be enough when only using evcc.
 We recommend running your system from eMMC instead of SD card.
-**Radxa and NanoPi boards come with built-in eMMC storage.**
+**NanoPi boards come with built-in eMMC storage.**
 If you decide to run your system directly from SD card, be sure to read [Armbian's recommendations](https://docs.armbian.com/User-Guide_Getting-Started/#armbian-getting-started-guide) first.
 
 ### CPU and RAM
@@ -78,10 +77,25 @@ The device will create a WiFi setup hotspot **if no internet connection is detec
 
 **Note**: WiFi setup is a one-time process. To reconfigure WiFi at a new location, simply reboot the device and `evcc-setup` will appear again.
 
-For ethernet-only boards like the Radxa and NanoPi, you can use WiFi USB dongles. The following adapters have been tested successfully:
+For ethernet-only boards like the NanoPi, you can use WiFi USB dongles. The following adapters have been tested successfully:
 
 - EDUP EP-B8508GS
 - _add your's here ..._
+
+## Building Images Locally
+
+You'll need Docker Desktop installed and running.
+
+```bash
+# Clone and enter the repository
+git clone https://github.com/evcc-io/images.git
+cd images
+
+# Build for Raspberry Pi
+./build-local.sh --board rpi4b
+```
+
+The image will be at `dist/armbian_evcc-local_rpi4b.img.zip`.
 
 ## Contributing
 

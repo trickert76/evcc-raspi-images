@@ -25,12 +25,11 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 # Set defaults
-export EVCC_CHANNEL=${EVCC_CHANNEL:-stable}
 export EVCC_HOSTNAME=${EVCC_HOSTNAME:-evcc}
 export TIMEZONE=${TIMEZONE:-Europe/Berlin}
 export DEBIAN_FRONTEND=noninteractive
 
-echo "[customize-image] hostname=$EVCC_HOSTNAME channel=$EVCC_CHANNEL tz=$TIMEZONE"
+echo "[customize-image] hostname=$EVCC_HOSTNAME tz=$TIMEZONE"
 
 # ============================================================================
 # SYSTEM SETUP
@@ -41,11 +40,11 @@ echo "[customize-image] setting up system"
 apt-get update
 apt-get -y full-upgrade
 
-# Install base networking utils and mdns (avahi)
+# Install base utils and mdns (avahi)
 apt-get install -y --no-install-recommends \
   curl ca-certificates gnupg apt-transport-https \
   avahi-daemon avahi-utils libnss-mdns \
-  sudo network-manager python3-gi python3-dbus
+  sudo python3-gi python3-dbus
 
 # Set timezone
 apt-get install -y --no-install-recommends tzdata
@@ -254,11 +253,7 @@ NMCONF
 echo "[customize-image] setting up evcc"
 
 # Install evcc via APT repository per docs
-if [[ "$EVCC_CHANNEL" == "unstable" ]]; then
-  curl -1sLf 'https://dl.evcc.io/public/evcc/unstable/setup.deb.sh' | bash -E
-else
-  curl -1sLf 'https://dl.evcc.io/public/evcc/stable/setup.deb.sh' | bash -E
-fi
+curl -1sLf 'https://dl.evcc.io/public/evcc/stable/setup.deb.sh' | bash -E
 
 apt-get update
 apt-get install -y evcc

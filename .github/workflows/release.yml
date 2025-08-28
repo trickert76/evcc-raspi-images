@@ -1,6 +1,9 @@
 name: Create Release
 
 on:
+  schedule:
+    # Run every Monday at 2am UTC
+    - cron: '0 2 * * 1'
   workflow_dispatch:
     inputs:
       board:
@@ -11,16 +14,7 @@ on:
         options:
           - all
           - rpi4b
-          - radxa-e52c
           - nanopi-r3s
-      evcc_channel:
-        description: "evcc APT channel (stable or nightly)"
-        required: true
-        default: "stable"
-        type: choice
-        options:
-          - stable
-          - nightly
       draft:
         description: "Create as draft release for testing"
         required: false
@@ -43,14 +37,18 @@ jobs:
       - name: Compute matrix
         id: set-matrix
         run: |
-          choice='${{ inputs.board }}'
-          case "$choice" in
-            all)      MATRIX='["rpi4b","radxa-e52c","nanopi-r3s"]' ;;
-            rpi4b)    MATRIX='["rpi4b"]' ;;
-            radxa-e52c) MATRIX='["radxa-e52c"]' ;;
-            nanopi-r3s) MATRIX='["nanopi-r3s"]' ;;
-            *) echo "Unknown board: $choice" >&2; exit 1 ;;
-          esac
+          # For scheduled runs, build all boards
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            MATRIX='["rpi4b","nanopi-r3s"]'
+          else
+            choice='${{ inputs.board }}'
+            case "$choice" in
+              all)      MATRIX='["rpi4b","nanopi-r3s"]' ;;
+              rpi4b)    MATRIX='["rpi4b"]' ;;
+              nanopi-r3s) MATRIX='["nanopi-r3s"]' ;;
+              *) echo "Unknown board: $choice" >&2; exit 1 ;;
+            esac
+          fi
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
 
       - name: Generate release name
@@ -77,15 +75,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Read evcc version
-        id: evcc-version
-        run: |
-          EVCC_VERSION=$(tr -d '\n\r' < EVCC_VERSION)
-          echo "version=$EVCC_VERSION" >> $GITHUB_OUTPUT
-
       - name: Generate release notes
         run: |
-          echo "evcc ${{ steps.evcc-version.outputs.version }} (${{ inputs.evcc_channel }} channel) on Armbian bookworm." > release_notes.md
+          echo "Latest evcc stable version on Armbian bookworm." > release_notes.md
 
       - name: Create Release
         id: create-release
@@ -96,7 +88,7 @@ jobs:
           tag_name: ${{ steps.release-name.outputs.tag }}
           release_name: evcc Images ${{ steps.release-name.outputs.name }}
           body_path: release_notes.md
-          draft: ${{ inputs.draft }}
+          draft: ${{ github.event_name == 'schedule' && 'false' || inputs.draft }}
           prerelease: false
 
   build:
@@ -118,23 +110,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y qemu-user-static binfmt-support xz-utils zip
 
-      - name: Read evcc version
-        id: evcc-version
-        run: |
-          EVCC_VERSION=$(tr -d '\n\r' < EVCC_VERSION)
-          echo "version=$EVCC_VERSION" >> $GITHUB_OUTPUT
-          echo "EVCC_VERSION=$EVCC_VERSION" >> $GITHUB_ENV
 
       - name: Build image
-        env:
-          EVCC_CHANNEL: ${{ inputs.evcc_channel }}
         run: |
           set -euo pipefail
           chmod +x ./scripts/build-armbian.sh
           echo "::group::Building for ${{ matrix.board }}"
           bash ./scripts/build-armbian.sh \
             --board "${{ matrix.board }}" \
-            --evcc-channel "$EVCC_CHANNEL"
+            --release-name "${{ needs.prepare.outputs.release_name }}"
           echo "::endgroup::"
 
       - name: Compress .img file
@@ -160,7 +144,7 @@ jobs:
         with:
           upload_url: ${{ needs.prepare.outputs.release_upload_url }}
           asset_path: ${{ steps.find-files.outputs.img_zip }}
-          asset_name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img.zip
+          asset_name: armbian_evcc-${{ needs.prepare.outputs.release_name }}_${{ matrix.board }}.img.zip
           asset_content_type: application/zip
 
       - name: Upload SHA file to release
@@ -170,7 +154,7 @@ jobs:
         with:
           upload_url: ${{ needs.prepare.outputs.release_upload_url }}
           asset_path: ${{ steps.find-files.outputs.sha_file }}
-          asset_name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img.sha
+          asset_name: armbian_evcc-${{ needs.prepare.outputs.release_name }}_${{ matrix.board }}.img.sha
           asset_content_type: text/plain
 
       - name: Upload TXT file to release
@@ -180,5 +164,5 @@ jobs:
         with:
           upload_url: ${{ needs.prepare.outputs.release_upload_url }}
           asset_path: ${{ steps.find-files.outputs.txt_file }}
-          asset_name: armbian_evcc-${{ steps.evcc-version.outputs.version }}_${{ matrix.board }}.img.txt
+          asset_name: armbian_evcc-${{ needs.prepare.outputs.release_name }}_${{ matrix.board }}.img.txt
           asset_content_type: text/plain
