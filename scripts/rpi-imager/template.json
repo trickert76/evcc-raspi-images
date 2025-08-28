@@ -1,0 +1,23 @@
+{
+  "os_list": [
+    {
+      "name": "evcc",
+      "description": "open source solar charging and heating solution",
+      "version": "__VERSION__",
+      "release_date": "__RELEASE_DATE__",
+      "url": "__IMAGE_URL__",
+      "extract_size": __EXTRACT_SIZE__,
+      "extract_sha256": "__EXTRACT_SHA256__",
+      "image_download_size": __IMAGE_SIZE__,
+      "image_download_sha256": "__IMAGE_SHA256__",
+      "icon": "https://raw.githubusercontent.com/evcc-io/app/refs/heads/main/assets/icon-light.png",
+      "website": "https://evcc.io/en/",
+      "subitems_url": "",
+      "devices": [
+        "pi3-64bit",
+        "pi4-64bit",
+        "pi5-64bit"
+      ]
+    }
+  ]
+}
