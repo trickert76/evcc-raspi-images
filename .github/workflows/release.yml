@@ -3,7 +3,7 @@ name: Create Release
 on:
   schedule:
     # Run every Monday at 2am UTC
-    - cron: '0 2 * * 1'
+    - cron: "0 2 * * 1"
   workflow_dispatch:
     inputs:
       board:
@@ -93,7 +93,7 @@ jobs:
 
   build:
     needs: prepare
-    runs-on: depot-ubuntu-24.04-arm-4
+    runs-on: depot-ubuntu-24.04-arm-16
     timeout-minutes: 360
     strategy:
       fail-fast: false
@@ -109,7 +109,6 @@ jobs:
           mkdir -p dist logs
           sudo apt-get update
           sudo apt-get install -y qemu-user-static binfmt-support xz-utils zip
-
 
       - name: Build image
         run: |
