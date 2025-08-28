@@ -41,8 +41,13 @@ RPI_IMAGE_SHA=$(echo "$RELEASE_INFO" | jq -r '.assets[] | select(.name | contain
 
 if [ -z "$RPI_IMAGE_ZIP" ] || [ -z "$RPI_IMAGE_SHA" ]; then
     echo "RPi image not found in release"
+    echo "Available assets:"
+    echo "$RELEASE_INFO" | jq -r '.assets[].name'
     exit 1
 fi
+
+echo "Found RPi image: $RPI_IMAGE_ZIP"
+echo "Found SHA file: $RPI_IMAGE_SHA"
 
 # Construct download URLs
 IMAGE_URL="https://github.com/evcc-io/evcc-images/releases/download/${LATEST_RELEASE}/${RPI_IMAGE_ZIP}"
@@ -52,8 +57,11 @@ SHA_URL="https://github.com/evcc-io/evcc-images/releases/download/${LATEST_RELEA
 TEMP_DIR=$(mktemp -d)
 trap "rm -rf $TEMP_DIR" EXIT
 
-echo "Downloading SHA file..."
-curl -sL "$SHA_URL" -o "$TEMP_DIR/image.sha"
+echo "Downloading SHA file from: $SHA_URL"
+if ! curl -fL "$SHA_URL" -o "$TEMP_DIR/image.sha"; then
+    echo "Failed to download SHA file from $SHA_URL"
+    exit 1
+fi
 
 # Parse SHA file (format: "SHA256 (filename) = hash")
 EXTRACT_SHA256=$(grep "SHA256" "$TEMP_DIR/image.sha" | sed 's/.*= //' | tr -d ' \n')
@@ -62,8 +70,11 @@ EXTRACT_SHA256=$(grep "SHA256" "$TEMP_DIR/image.sha" | sed 's/.*= //' | tr -d ' 
 IMAGE_SIZE=$(echo "$RELEASE_INFO" | jq -r ".assets[] | select(.name == \"$RPI_IMAGE_ZIP\") | .size")
 
 # Calculate SHA256 of the ZIP file (we need to download it)
-echo "Downloading image to calculate ZIP SHA256..."
-curl -sL "$IMAGE_URL" -o "$TEMP_DIR/image.zip"
+echo "Downloading image to calculate ZIP SHA256 from: $IMAGE_URL"
+if ! curl -fL "$IMAGE_URL" -o "$TEMP_DIR/image.zip"; then
+    echo "Failed to download image from $IMAGE_URL"
+    exit 1
+fi
 IMAGE_SHA256=$(sha256sum "$TEMP_DIR/image.zip" | cut -d' ' -f1)
 
 # Get uncompressed size (extract and check)
