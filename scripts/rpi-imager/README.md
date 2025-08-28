@@ -10,7 +10,7 @@ When a new release is published, the `update-rpi-imager.yml` workflow automatica
 - Updates the `rpi-imager.json` file
 - Publishes it to GitHub Pages
 
-**URL**: `https://evcc-io.github.io/evcc-images/rpi-imager.json`
+**URL**: `https://evcc-io.github.io/images/rpi-imager.json`
 
 **Supported Devices**:
 - Raspberry Pi 3, 4, 5 (64-bit)

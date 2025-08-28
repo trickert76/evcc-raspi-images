@@ -50,8 +50,8 @@ echo "Found RPi image: $RPI_IMAGE_ZIP"
 echo "Found SHA file: $RPI_IMAGE_SHA"
 
 # Construct download URLs
-IMAGE_URL="https://github.com/evcc-io/evcc-images/releases/download/${LATEST_RELEASE}/${RPI_IMAGE_ZIP}"
-SHA_URL="https://github.com/evcc-io/evcc-images/releases/download/${LATEST_RELEASE}/${RPI_IMAGE_SHA}"
+IMAGE_URL="https://github.com/evcc-io/images/releases/download/${LATEST_RELEASE}/${RPI_IMAGE_ZIP}"
+SHA_URL="https://github.com/evcc-io/images/releases/download/${LATEST_RELEASE}/${RPI_IMAGE_SHA}"
 
 # Download SHA file to get checksums
 TEMP_DIR=$(mktemp -d)
