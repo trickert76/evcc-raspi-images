@@ -63,11 +63,23 @@ if ! curl -fL "$SHA_URL" -o "$TEMP_DIR/image.sha"; then
     exit 1
 fi
 
-# Parse SHA file (format: "SHA256 (filename) = hash")
-EXTRACT_SHA256=$(grep "SHA256" "$TEMP_DIR/image.sha" | sed 's/.*= //' | tr -d ' \n')
+# Parse SHA file - it's just "hash filename" format
+EXTRACT_SHA256=$(cut -d' ' -f1 "$TEMP_DIR/image.sha")
+if [ -z "$EXTRACT_SHA256" ]; then
+    echo "Failed to parse SHA256 from SHA file"
+    echo "SHA file contents:"
+    cat "$TEMP_DIR/image.sha"
+    exit 1
+fi
+echo "Extracted SHA256: $EXTRACT_SHA256"
 
 # Get file size from GitHub
 IMAGE_SIZE=$(echo "$RELEASE_INFO" | jq -r ".assets[] | select(.name == \"$RPI_IMAGE_ZIP\") | .size")
+if [ -z "$IMAGE_SIZE" ]; then
+    echo "Failed to get image size from GitHub"
+    exit 1
+fi
+echo "Image download size: $IMAGE_SIZE bytes"
 
 # Calculate SHA256 of the ZIP file (we need to download it)
 echo "Downloading image to calculate ZIP SHA256 from: $IMAGE_URL"
@@ -79,8 +91,12 @@ IMAGE_SHA256=$(sha256sum "$TEMP_DIR/image.zip" | cut -d' ' -f1)
 
 # Get uncompressed size (extract and check)
 echo "Extracting image to get uncompressed size..."
-unzip -q "$TEMP_DIR/image.zip" -d "$TEMP_DIR/"
+if ! unzip -q "$TEMP_DIR/image.zip" -d "$TEMP_DIR/"; then
+    echo "Failed to extract image"
+    exit 1
+fi
 EXTRACT_SIZE=$(stat -c%s "$TEMP_DIR"/*.img)
+echo "Extracted image size: $EXTRACT_SIZE bytes"
 
 # Create the final JSON from template
 cp scripts/rpi-imager/template.json rpi-imager.json
