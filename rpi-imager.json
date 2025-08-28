@@ -1,0 +1,23 @@
+{
+  "os_list": [
+    {
+      "name": "evcc",
+      "description": "open source solar charging and heating solution",
+      "version": "2025-08.6",
+      "release_date": "2025-08-28",
+      "url": "https://github.com/evcc-io/images/releases/download/v2025-08.6/armbian_evcc-2025-08.6_rpi4b.img.zip",
+      "extract_size": 2713714688,
+      "extract_sha256": "2c35fc013c09fc61620134f13eafae939eb146acb7debac142af5c51deeba42b",
+      "image_download_size": 728920787,
+      "image_download_sha256": "70dfcf6c7467fc6352ee536795b19961434bc5fe22700a09dab482fb9f1a56d7",
+      "icon": "https://raw.githubusercontent.com/evcc-io/app/refs/heads/main/assets/icon-light.png",
+      "website": "https://evcc.io/en/",
+      "subitems_url": "",
+      "devices": [
+        "pi3-64bit",
+        "pi4-64bit",
+        "pi5-64bit"
+      ]
+    }
+  ]
+}
