@@ -14,6 +14,7 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 - 🛠️ [Cockpit](https://cockpit-project.org) web console for administration
 - 📶 [comitup](https://github.com/davesteele/comitup) for WiFi setup without ethernet
 - 🐧 [Armbian](https://www.armbian.com) base image and build system
+- 🔐 Automatic security updates enabled (Debian security patches)
 
 ## Getting Started
 
