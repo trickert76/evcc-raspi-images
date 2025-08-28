@@ -2,7 +2,7 @@
   "os_list": [
     {
       "name": "evcc",
-      "description": "open source solar charging and heating solution",
+      "description": "open source solar EV charging and smart heating",
       "version": "__VERSION__",
       "release_date": "__RELEASE_DATE__",
       "url": "__IMAGE_URL__",

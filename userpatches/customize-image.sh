@@ -342,6 +342,17 @@ CADDY
 systemctl enable caddy || true
 
 # ============================================================================
+# UNATTENDED SECURITY UPDATES
+# ============================================================================
+echo "[customize-image] setting up unattended security updates"
+
+# Install and enable unattended-upgrades (defaults to security-only in Debian 12)
+apt-get install -y --no-install-recommends unattended-upgrades
+echo 'APT::Periodic::Unattended-Upgrade "1";' > /etc/apt/apt.conf.d/20auto-upgrades
+
+echo "[customize-image] unattended security updates enabled"
+
+# ============================================================================
 # CLEANUP
 # ============================================================================
 echo "[customize-image] cleaning up"
