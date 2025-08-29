@@ -1,4 +1,4 @@
-# evcc Images for Raspberry Pi and other SBCs
+# evcc Linux Images for Raspberry Pi and other SBCs
 
 [![Built with Depot](https://depot.dev/badges/built-with-depot.svg)](https://depot.dev/?utm_source=evcc)
 
