@@ -25,7 +25,8 @@ This will fetch the latest release and update `rpi-imager.json` with checksums a
 
 ## Testing
 
-Test in Raspberry Pi Imager:
-1. Open Raspberry Pi Imager
-2. Press Ctrl+Shift+X for advanced options  
-3. Add the JSON URL as a custom repository
+Launch Raspberry Pi Imager with a custom repository file:
+
+```bash
+"/Applications/Raspberry Pi Imager.app/Contents/MacOS/rpi-imager" --repo "/path/to/rpi-imager.json"
+```
