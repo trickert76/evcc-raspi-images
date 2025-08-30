@@ -36,12 +36,12 @@ Repository for ready-to-use Debian-based [evcc](https://evcc.io) images for popu
 
 ## Supported Boards
 
-| Name                                                                                      | Tested | Image Name                                                 | Instructions                                                                                      |
-| ----------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)                    | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
-| [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)            | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
-| [Raspberry Pi 3b](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)           | ✅     | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
-| [NanoPi R3S](https://www.friendlyelec.com/index.php?route=product/product&product_id=311) | ✅     | [`nanopi-r3s`](https://github.com/evcc-io/images/releases) | see above, [then copy to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation) |
+| Name                                                                                      | Tested | WiFi | Storage | Image Name                                                 | Instructions                                                                                      |
+| ----------------------------------------------------------------------------------------- | ------ | ---- | ------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [Raspberry Pi 5](https://www.raspberrypi.com/products/raspberry-pi-5/)                    | ✅     | Built-in | SD only | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
+| [Raspberry Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)            | ✅     | Built-in | SD only | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
+| [Raspberry Pi 3b](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)           | ✅     | Built-in | SD only | [`rpi4b`](https://github.com/evcc-io/images/releases)      | see above                                                                                         |
+| [NanoPi R3S](https://www.friendlyelec.com/index.php?route=product/product&product_id=311) | ✅     | via USB | eMMC & SD | [`nanopi-r3s`](https://github.com/evcc-io/images/releases) | see above, [then copy to eMMC](https://docs.armbian.com/User-Guide_Getting-Started/#installation) |
 
 ✅ tested<br/>
 ⚠️ untested (but should work)
@@ -82,6 +82,20 @@ For ethernet-only boards like the NanoPi, you can use WiFi USB dongles. The foll
 
 - EDUP EP-B8508GS
 - _add your's here ..._
+
+## Hardware Comparison
+
+CPU performance is not critical for evcc operation as it's not CPU-intensive. These benchmarks are provided for reference and future-proofing considerations.
+
+![CPU Performance Chart](https://quickchart.io/chart?w=800&h=200&c={type:'horizontalBar',data:{labels:['Raspberry%20Pi%203%20B%2B','NanoPi%20R3S','Raspberry%20Pi%204','Raspberry%20Pi%205'],datasets:[{label:'CPU%20Single',data:[21.78,370.98,583.00,1041.75],backgroundColor:'rgba(54,162,235,0.8)',borderWidth:0},{label:'CPU%20Multi',data:[83.41,1466.78,2330.16,4165.05],backgroundColor:'rgba(255,99,132,0.8)',borderWidth:0}]},options:{responsive:false,maintainAspectRatio:false,plugins:{title:{display:false},legend:{display:true,position:'bottom',labels:{boxWidth:12,padding:8,font:{size:10}}}},scales:{x:{beginAtZero:true,grid:{display:false},ticks:{display:false}},y:{grid:{display:false},ticks:{font:{size:10}}}}}})
+
+Benchmark methodology: Results obtained using sysbench with the following commands:
+```bash
+# CPU Single
+sysbench --test=cpu --cpu-max-prime=20000 --num-threads=1 --max-time=200 run
+# CPU Multi
+sysbench --test=cpu --cpu-max-prime=20000 --num-threads=4 --max-time=200 run
+```
 
 ## Building Images Locally
 
