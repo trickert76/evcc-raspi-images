@@ -329,8 +329,10 @@ cat >/etc/caddy/Caddyfile <<CADDY
 }
 
 # HTTPS on 443 with Caddy internal TLS
-${EVCC_HOSTNAME}.local:443 {
-  tls internal
+https:// {
+  tls internal {
+    on_demand
+  }
   encode zstd gzip
   log
   reverse_proxy 127.0.0.1:7070
