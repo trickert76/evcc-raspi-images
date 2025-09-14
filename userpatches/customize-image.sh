@@ -325,6 +325,7 @@ mkdir -p /etc/caddy
 cat >/etc/caddy/Caddyfile <<CADDY
 {
   email admin@example.com
+  auto_https disable_redirects
 }
 
 # HTTPS on 443 with Caddy internal TLS
