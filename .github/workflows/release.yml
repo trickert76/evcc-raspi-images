@@ -1,6 +1,7 @@
 name: Create Release
 
 on:
+  push:
   schedule:
     # Run every Monday at 2am UTC
     - cron: "0 2 * * 1"
@@ -88,8 +89,8 @@ jobs:
           tag_name: ${{ steps.release-name.outputs.tag }}
           release_name: evcc Images ${{ steps.release-name.outputs.name }}
           body_path: release_notes.md
-          draft: ${{ github.event_name == 'schedule' && 'false' || inputs.draft }}
           prerelease: false
+          # draft: ${{ github.event_name == 'schedule' && 'false' || inputs.draft }}
 
   build:
     needs: prepare

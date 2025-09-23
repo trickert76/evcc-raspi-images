@@ -43,7 +43,7 @@ apt-get -y full-upgrade
 # Install base utils and mdns (avahi)
 apt-get install -y --no-install-recommends \
   curl ca-certificates gnupg apt-transport-https \
-  avahi-daemon avahi-utils libnss-mdns \
+  avahi-daemon avahi-utils libnss-mdns lsb-release \
   sudo python3-gi python3-dbus
 
 # Set timezone
@@ -353,6 +353,70 @@ apt-get install -y --no-install-recommends unattended-upgrades
 echo 'APT::Periodic::Unattended-Upgrade "1";' > /etc/apt/apt.conf.d/20auto-upgrades
 
 echo "[customize-image] unattended security updates enabled"
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get update
+apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+mkdir -p /srv/docker/sol
+cat >/srv/docker/sol/docker-compose.yml <<COMPOSE
+services:
+  grafana:
+    image: "docker.io/grafana/grafana:main"
+    restart: "unless-stopped"
+    depends_on:
+      - "influxdb2"
+    volumes:
+      - "./data/grafana:/var/lib/grafana"
+      - "./conf/grafana/provisioning:/etc/grafana/provisioning"
+    environment:
+      TZ: "Europe/Berlin"
+      GF_INSTALL_PLUGINS: "fetzerch-sunandmoon-datasource, briangann-gauge-panel, agenty-flowcharting-panel"
+      GF_SECURITY_ADMIN_USER: "admin"
+      GF_SECURITY_ADMIN_PASSWORD: "solaranzeige"
+      GF_SERVER_DOMAIN: "sol.m84.de"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: true
+      GF_AUTH_ANONYMOUS_ENABLED: true
+    user: "472"
+
+  influxdb2:
+    image: "docker.io/influxdb:2"
+    restart: "unless-stopped"
+    ports:
+      - "8086:8086/tcp"
+    volumes:
+     - "./data/influxdb2:/var/lib/influxdb2"
+
+COMPOSE
+
+cat >/etc/systemd/system/sol.service <<COMPOSEBOOT
+
+[Unit]
+Description=Docker Compose SOL Application Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/srv/docker/sol
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+
+COMPOSEBOOT
+
+systemctl enable sol || true
 
 # ============================================================================
 # CLEANUP
