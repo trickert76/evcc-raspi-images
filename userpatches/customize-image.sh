@@ -358,13 +358,24 @@ echo "[customize-image] unattended security updates enabled"
 # DOCKER
 # ============================================================================
 
+echo "[customize-image] setting up docker"
+
 mkdir -p /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt-get update
 apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
+echo "[customize-image] setting up sol"
+
 mkdir -p /srv/docker/sol
+mkdir -p /srv/docker/sol/data/grafana
+mkdir -p /srv/docker/sol/conf/
+chmod 777 /srv/docker/sol/data/grafana
+if [ -d /userpatches/grafana ]; then
+  cp /userpatches/grafana /srv/docker/sol/conf/.
+fi
+
 cat >/srv/docker/sol/docker-compose.yml <<COMPOSE
 services:
   grafana:
@@ -400,8 +411,8 @@ cat >/etc/systemd/system/sol.service <<COMPOSEBOOT
 
 [Unit]
 Description=Docker Compose SOL Application Service
-Requires=docker.service
-After=docker.service
+Requires=docker.service network-online.target
+After=docker.service network-online.target
 
 [Service]
 Type=oneshot

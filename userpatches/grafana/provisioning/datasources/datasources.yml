@@ -1,0 +1,15 @@
+apiVersion: 1
+
+datasources:
+- orgId: 1
+  name: Solaranzeige
+  type: influxdb
+  typeName: InfluxDB
+  access: proxy
+  url: {{ service_settings.influxdb.url }}
+  jsonData:
+    dbName: {{ service_settings.influxdb.bucket }}
+    httpHeaderName1: 'Authorization'
+  secureJsonData:
+    httpHeaderValue1: 'Token {{ service_settings.influxdb.token }}'
+  readOnly: false
